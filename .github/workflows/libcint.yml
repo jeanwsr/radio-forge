@@ -1,10 +1,13 @@
-name: Build qcint
+name: Build libcint
 
 on:
   workflow_dispatch:
   pull_request:
     branches:
       - main
+
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -15,7 +18,7 @@ jobs:
         os:
           - ubuntu-latest
         packagedir:
-          - qcint
+          - libcint
       fail-fast: false
 
     runs-on: ${{ matrix.os }}
@@ -28,7 +31,7 @@ jobs:
           pixi-version: v0.47.0
           cache: true
 
-      - name: Run code in changed subdirectories
+      - name: Build libcint package
         shell: bash
         env:
           TARGET_PLATFORM: ${{ matrix.target }}
@@ -38,9 +41,9 @@ jobs:
         run: |
           pixi run rattler-build build --recipe-dir $PACKAGEDIR \
             --skip-existing=all --target-platform=$TARGET_PLATFORM \
-            -c conda-forge
+            -c restgroup -c conda-forge
 
           # ignore errors because we want to ignore duplicate packages
           for file in output/**/*.conda; do
-            pixi run rattler-build upload anaconda -o chillenb "$file" || true
+            pixi run rattler-build upload anaconda -o restgroup "$file" || true
           done
