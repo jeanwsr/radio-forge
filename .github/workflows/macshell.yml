@@ -12,8 +12,12 @@ on:
           - macos-15-intel
         default: macos-latest
 
+permissions:
+  contents: read
+
 jobs:
   debug:
+    if: false
     runs-on: ${{ github.event.inputs.runner }}
     steps:
       - uses: actions/checkout@v4

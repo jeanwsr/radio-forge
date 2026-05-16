@@ -6,8 +6,12 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   build:
+    if: false
     name: Build tblis-dev on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     container: ${{ matrix.container || '' }}
@@ -55,6 +59,7 @@ jobs:
           path: output/**/*.conda
 
   upload_all:
+    if: false
     needs: build
     environment: anaconda
     runs-on: ubuntu-latest

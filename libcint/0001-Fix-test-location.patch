@@ -1,0 +1,38 @@
+From 3401c2487ab3f7d77114f4054909d46b719be3c1 Mon Sep 17 00:00:00 2001
+From: Chris Hillenbrand <chillenb.lists@gmail.com>
+Date: Sat, 8 Jun 2024 22:32:07 -0400
+Subject: [PATCH] Fix test location
+
+---
+ testsuite/test_3c2e.py | 2 +-
+ testsuite/test_cint.py | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/testsuite/test_3c2e.py b/testsuite/test_3c2e.py
+index 3a3c31d..47ea8df 100644
+--- a/testsuite/test_3c2e.py
++++ b/testsuite/test_3c2e.py
+@@ -13,7 +13,7 @@ import os
+ import ctypes
+ import numpy
+ 
+-_cint = ctypes.CDLL(os.path.abspath(os.path.join(__file__, '../../build/libcint.so')))
++_cint = numpy.ctypeslib.load_library('libcint', os.path.join(sys.prefix, 'lib'))
+ 
+ PTR_LIGHT_SPEED    = 0
+ PTR_COMMON_ORIG    = 1
+diff --git a/testsuite/test_cint.py b/testsuite/test_cint.py
+index e93dc05..ab42d84 100644
+--- a/testsuite/test_cint.py
++++ b/testsuite/test_cint.py
+@@ -13,7 +13,7 @@ import os
+ import ctypes
+ import numpy
+ 
+-_cint = ctypes.CDLL(os.path.abspath(os.path.join(__file__, '../../build/libcint.so')))
++_cint = numpy.ctypeslib.load_library('libcint', os.path.join(sys.prefix, 'lib'))
+ 
+ 
+ PTR_EXPCUTOFF      = 0
+-- 
+2.45.2
