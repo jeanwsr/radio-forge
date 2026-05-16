@@ -34,6 +34,7 @@ jobs:
         with:
           pixi-version: v0.47.0
           cache: true
+          locked: false
 
       - name: Build libcint package
         shell: bash
