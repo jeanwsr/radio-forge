@@ -31,7 +31,9 @@ build:
 
 requirements:
   build:
-    - ${{ compiler('c') }}
+    - if: win
+      then: gcc_win-64
+      else: ${{ compiler('c') }}
     - cmake
     - make
   run_exports:
