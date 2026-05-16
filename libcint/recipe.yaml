@@ -24,8 +24,6 @@ build:
         -B build
       cmake --build build -j ${CPU_COUNT}
       cmake --install build
-  run_exports:
-    - ${{ pin_subpackage(name, lower_bound="x.x", upper_bound="x.x") }}
 
 requirements:
   build:
@@ -33,6 +31,8 @@ requirements:
     - ${{ stdlib("c") }}
     - cmake
     - make
+  run_exports:
+    - ${{ pin_subpackage(name, lower_bound="x.x", upper_bound="x.x") }}
 
 tests:
   - script:
