@@ -22,6 +22,9 @@ build:
         - cmake --install build
     - if: win
       then:
+        - set CMAKE_GENERATOR=
+        - set CMAKE_GENERATOR_PLATFORM=
+        - set CMAKE_GENERATOR_TOOLSET=
         - cmake %CMAKE_ARGS% -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%LIBRARY_PREFIX% -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_SHARED_LIBS=ON -S . -B build
         - cmake --build build --config Release --parallel %CPU_COUNT%
         - cmake --install build --config Release
