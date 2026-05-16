@@ -15,15 +15,16 @@ source:
 build:
   number: 0
   script:
-    content: |
-      cmake ${CMAKE_ARGS} -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_INSTALL_PREFIX=$PREFIX \
-        -DCMAKE_INSTALL_LIBDIR=lib \
-        -DBUILD_SHARED_LIBS=ON \
-        -S . \
-        -B build
-      cmake --build build -j ${CPU_COUNT}
-      cmake --install build
+    - if: unix
+      then:
+        - cmake ${CMAKE_ARGS} -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$PREFIX -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_SHARED_LIBS=ON -S . -B build
+        - cmake --build build -j ${CPU_COUNT}
+        - cmake --install build
+    - if: win
+      then:
+        - cmake %CMAKE_ARGS% -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%LIBRARY_PREFIX% -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_SHARED_LIBS=ON -S . -B build
+        - cmake --build build --config Release --parallel %CPU_COUNT%
+        - cmake --install build --config Release
 
 requirements:
   build:
