@@ -43,6 +43,10 @@ requirements:
 
 tests:
   - script:
+      - if: win
+        then:
+          - if not exist "%PREFIX%\lib" mkdir "%PREFIX%\lib"
+          - if exist "%PREFIX%\Library\bin\libcint.dll" copy /Y "%PREFIX%\Library\bin\libcint.dll" "%PREFIX%\lib\libcint.dll"
       - cd testsuite
       - python test_cint.py --quick
       - python test_3c2e.py --quick
