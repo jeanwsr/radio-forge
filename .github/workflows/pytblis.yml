@@ -1,0 +1,86 @@
+name: Build pytblis
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    if: false
+    name: Build pytblis on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    container: ${{ matrix.container || '' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: linux-64
+            packagedir: pytblis
+            container: quay.io/condaforge/linux-anvil-x86_64:alma9
+
+          - os: ubuntu-24.04-arm
+            target: linux-aarch64
+            packagedir: pytblis
+            container: quay.io/condaforge/linux-anvil-aarch64:alma9
+
+          - os: macos-latest
+            target: osx-arm64
+            packagedir: pytblis
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: prefix-dev/setup-pixi@v0.8.8
+        with:
+          pixi-version: v0.47.0
+          cache: true
+
+      - name: Run code in changed subdirectories
+        shell: bash
+        env:
+          TARGET_PLATFORM: ${{ matrix.target }}
+          PACKAGEDIR: ${{ matrix.packagedir }}
+          ANACONDA_API_KEY: ${{ secrets.ANACONDA_API_KEY }}
+
+        run: |
+          pixi run rattler-build build --recipe-dir $PACKAGEDIR \
+            --skip-existing=all --target-platform=$TARGET_PLATFORM \
+            -c chillenb -c conda-forge
+
+      - name: Upload packages to Github
+        uses: actions/upload-artifact@v5
+        with:
+          name: pytblis-packages-${{ matrix.target }}-${{ strategy.job-index }}
+          path: output/**/*.conda
+
+  upload_all:
+    if: false
+    needs: build
+    environment: anaconda
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v6
+        with:
+          pattern: pytblis-packages-*
+          path: packages
+      - uses: prefix-dev/setup-pixi@v0.8.8
+        with:
+          pixi-version: v0.47.0
+          cache: true
+      - name: Upload packages to Anaconda
+        shell: bash
+        env:
+          ANACONDA_API_KEY: ${{ secrets.ANACONDA_API_KEY }}
+
+        run: |
+          find packages -name "*.conda" -type f | while read -r file; do
+            pixi run rattler-build upload anaconda -o chillenb "$file" || true
+          done
