@@ -13,12 +13,16 @@ jobs:
   build:
     strategy:
       matrix:
-        target:
-          - linux-64
-        os:
-          - ubuntu-latest
-        packagedir:
-          - libcint
+        include:
+          - os: ubuntu-latest
+            target: linux-64
+            packagedir: libcint
+          - os: macos-latest
+            target: osx-arm64
+            packagedir: libcint
+          - os: windows-latest
+            target: win-64
+            packagedir: libcint
       fail-fast: false
 
     runs-on: ${{ matrix.os }}
@@ -30,6 +34,7 @@ jobs:
         with:
           pixi-version: v0.47.0
           cache: true
+          locked: false
 
       - name: Build libcint package
         shell: bash
