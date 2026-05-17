@@ -33,7 +33,7 @@ requirements:
     - setuptools
   host:
     - libblas
-    - qcint
+    - libcint
     - libxc-c >=6,<8
     - make
     - pip
