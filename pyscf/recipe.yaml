@@ -1,7 +1,7 @@
 
 context:
   name: pyscf
-  version: 2.9.0
+  version: 2.13.0
 
 package:
   name: ${{ name }}
@@ -9,7 +9,7 @@ package:
 
 source:
   url: https://github.com/pyscf/pyscf/archive/refs/tags/v${{ version }}.tar.gz
-  sha256: 4407f515f3173dc6f8df2d2e889a2fbaac0279ea04d5d38ceb4753a63a5a222a
+  sha256: b0f22880d918d3ae7cf6abb5629c457d2e58a572e22695ee849b17efa05c57d2
 
 build:
   python:

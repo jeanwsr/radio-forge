@@ -11,15 +11,15 @@ permissions:
 
 jobs:
   build:
-    if: false
     strategy:
       matrix:
-        target:
-          - linux-64
-        os:
-          - ubuntu-latest
-        packagedir:
-          - pyscf
+        include:
+          - os: ubuntu-latest
+            target: linux-64
+            packagedir: pyscf
+          - os: windows-latest
+            target: win-64
+            packagedir: pyscf
       fail-fast: false
 
     runs-on: ${{ matrix.os }}
