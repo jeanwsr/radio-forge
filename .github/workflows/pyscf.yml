@@ -42,9 +42,9 @@ jobs:
         run: |
           pixi run rattler-build build --recipe-dir $PACKAGEDIR \
             --skip-existing=all --target-platform=$TARGET_PLATFORM \
-            -c chillenb -c conda-forge
+            -c restgroup -c conda-forge
 
           # ignore errors because we want to ignore duplicate packages
           for file in output/**/*.conda; do
-            pixi run rattler-build upload anaconda -o chillenb "$file" || true
+            pixi run rattler-build upload anaconda -o restgroup "$file" || true
           done
