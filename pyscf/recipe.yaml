@@ -10,6 +10,8 @@ package:
 source:
   url: https://github.com/pyscf/pyscf/archive/refs/tags/v${{ version }}.tar.gz
   sha256: b0f22880d918d3ae7cf6abb5629c457d2e58a572e22695ee849b17efa05c57d2
+  patches:
+    - 0001-remove-stderr-from-openmp-shared.patch
 
 build:
   python:
@@ -30,7 +32,6 @@ build:
         - set CMAKE_BUILD_PARALLEL_LEVEL=4
         - set LDFLAGS=%LDFLAGS% -L%LIBRARY_PREFIX%\bin
         - set CMAKE_CONFIGURE_ARGS=%CMAKE_ARGS% -DCMAKE_C_COMPILER=%CC% -DCMAKE_CXX_COMPILER=%CXX% -DBLAS_LIBRARIES=lapack;blas -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%LIBRARY_PREFIX% -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_SHARED_LIBS=ON -DBUILD_LIBCINT=OFF -DBUILD_LIBXC=OFF -DBUILD_XCFUN=OFF -LAH
-        - call %PYTHON% -c "from pathlib import Path; p=Path(r'%SRC_DIR%/pyscf/lib/cc/ccsd_t.c'); s=p.read_text(); old=', permute_idx, stderr)'; n=s.count(old); assert n>0, 'expected pattern not found'; p.write_text(s.replace(old, ', permute_idx)'))"
         - call %PYTHON% -m pip install . -vv
 
 requirements:
