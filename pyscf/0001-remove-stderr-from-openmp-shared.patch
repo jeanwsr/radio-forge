@@ -1,8 +1,7 @@
 diff --git a/pyscf/lib/cc/ccsd_t.c b/pyscf/lib/cc/ccsd_t.c
-index f36ef5f..4bc4e2e 100644
 --- a/pyscf/lib/cc/ccsd_t.c
 +++ b/pyscf/lib/cc/ccsd_t.c
-@@ -392,7 +392,7 @@ void CCsd_t_contract(double *e_tot,
+@@ -394,7 +394,7 @@
          _make_permute_indices(permute_idx, nocc);
  #pragma omp parallel default(none) \
          shared(njobs, nocc, nvir, mo_energy, t1T, t2T, nirrep, o_ir_loc, \
@@ -11,12 +10,48 @@ index f36ef5f..4bc4e2e 100644
  {
          int a, b, c;
          size_t k;
-@@ -447,7 +447,7 @@ void QCIsd_t_contract(double *e_tot,
+@@ -449,7 +449,7 @@
          _make_permute_indices(permute_idx, nocc);
  #pragma omp parallel default(none) \
          shared(njobs, nocc, nvir, mo_energy, t1T, t2T, nirrep, o_ir_loc, \
 -               v_ir_loc, oo_ir_loc, orbsym, vooo, fvo, jobs, e_tot, permute_idx, stderr)
 +               v_ir_loc, oo_ir_loc, orbsym, vooo, fvo, jobs, e_tot, permute_idx)
+ {
+         int a, b, c;
+         size_t k;
+@@ -630,7 +630,7 @@
+ 
+ #pragma omp parallel default(none) \
+         shared(njobs, nocc, nvir, mo_energy, t1T, t2T, nirrep, o_ir_loc, \
+-               v_ir_loc, oo_ir_loc, orbsym, vooo, fvo, jobs, e_tot, permute_idx, stderr)
++               v_ir_loc, oo_ir_loc, orbsym, vooo, fvo, jobs, e_tot, permute_idx)
+ {
+         int a, b, c;
+         size_t k;
+@@ -688,7 +688,7 @@
+ 
+ #pragma omp parallel default(none) \
+         shared(njobs, nocc, nvir, mo_energy, t1T, t2T, nirrep, o_ir_loc, \
+-               v_ir_loc, oo_ir_loc, orbsym, vooo, fvo, jobs, e_tot, permute_idx, stderr)
++               v_ir_loc, oo_ir_loc, orbsym, vooo, fvo, jobs, e_tot, permute_idx)
+ {
+         int a, b, c;
+         size_t k;
+@@ -874,7 +874,7 @@
+ 
+ #pragma omp parallel default(none) \
+         shared(njobs, nocc, nvir, mo_energy, t1T, fvo, jobs, e_tot, slices, \
+-               data_ptrs, permute_idx, stderr)
++               data_ptrs, permute_idx)
+ {
+         int a, b, c;
+         size_t k;
+@@ -1107,7 +1107,7 @@
+ 
+ #pragma omp parallel default(none) \
+         shared(njobs, nocc, nvir, nkpts, t3Tw, t3Tv, mo_offset, mo_energy, t1T, fvo, jobs, slices, \
+-               data_ptrs, permute_idx, stderr)
++               data_ptrs, permute_idx)
  {
          int a, b, c;
          size_t k;
