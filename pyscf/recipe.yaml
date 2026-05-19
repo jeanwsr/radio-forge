@@ -15,14 +15,18 @@ build:
   python:
     version_independent: true
   number: ${{ 1 + 100 * microarch_level }}
-  script: |
-    if ((${{ microarch_level }} > 1)); then
-    export CFLAGS="${CFLAGS} -march=x86-64-v${{ microarch_level }} -mtune=cascadelake";
-    export CXXFLAGS="${CXXFLAGS} -march=x86-64-v${{ microarch_level }} -mtune=cascadelake";
-    fi
-    export CMAKE_BUILD_PARALLEL_LEVEL=4
-    export CMAKE_CONFIGURE_ARGS="${CMAKE_ARGS} -DBLAS_LIBRARIES=lapack;blas -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$PREFIX -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_SHARED_LIBS=ON -DBUILD_LIBCINT=OFF -DBUILD_LIBXC=OFF -DBUILD_XCFUN=OFF -LAH"
-    ${{ PYTHON }} -m pip install . -vv
+  script:
+    - if: unix
+      then:
+        - if [ "${{ microarch_level }}" -gt 1 ]; then export CFLAGS="${CFLAGS} -march=x86-64-v${{ microarch_level }} -mtune=cascadelake"; export CXXFLAGS="${CXXFLAGS} -march=x86-64-v${{ microarch_level }} -mtune=cascadelake"; fi
+        - export CMAKE_BUILD_PARALLEL_LEVEL=4
+        - export CMAKE_CONFIGURE_ARGS="${CMAKE_ARGS} -DBLAS_LIBRARIES=lapack;blas -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$PREFIX -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_SHARED_LIBS=ON -DBUILD_LIBCINT=OFF -DBUILD_LIBXC=OFF -DBUILD_XCFUN=OFF -LAH"
+        - ${{ PYTHON }} -m pip install . -vv
+    - if: win
+      then:
+        - set CMAKE_BUILD_PARALLEL_LEVEL=4
+        - set CMAKE_CONFIGURE_ARGS=%CMAKE_ARGS% -DBLAS_LIBRARIES=lapack;blas -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%LIBRARY_PREFIX% -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_SHARED_LIBS=ON -DBUILD_LIBCINT=OFF -DBUILD_LIBXC=OFF -DBUILD_XCFUN=OFF -LAH
+        - call %PYTHON% -m pip install . -vv
 
 requirements:
   build:
