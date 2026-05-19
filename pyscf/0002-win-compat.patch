@@ -1,0 +1,72 @@
+diff --git a/examples/2-benchmark/benchmarking_utils.py b/examples/2-benchmark/benchmarking_utils.py
+index 78e3c37ea..7d9882a23 100644
+--- a/examples/2-benchmark/benchmarking_utils.py
++++ b/examples/2-benchmark/benchmarking_utils.py
+@@ -1,16 +1,27 @@
+ import os
++import sys
+ import pyscf
+ from pyscf.lib.logger import perf_counter, process_clock
+ 
+ def setup_logger():
+     log = pyscf.lib.logger.Logger(verbose=5)
+-    with open('/proc/cpuinfo') as f:
+-        for line in f:
+-            if 'model name' in line:
+-                log.note(line[:-1])
+-                break
+-    with open('/proc/meminfo') as f:
+-        log.note(f.readline()[:-1])
++    if sys.platform.startswith('linux'):
++        with open('/proc/cpuinfo') as f:
++            for line in f:
++                if 'model name' in line:
++                    log.note(line[:-1])
++                    break
++        with open('/proc/meminfo') as f:
++            log.note(f.readline()[:-1])
++    else:
++        try:
++            import psutil
++            log.note('CPU: %s', psutil.cpu_freq())
++            mem = psutil.virtual_memory()
++            log.note('Memory: %d MB total', mem.total / (1024 * 1024))
++        except (ImportError, Exception):
++            import platform
++            log.note('Platform: %s', platform.platform())
+     log.note('OMP_NUM_THREADS=%s\n', os.environ.get('OMP_NUM_THREADS', None))
+     return log
+ 
+diff --git a/pyscf/lib/misc.py b/pyscf/lib/misc.py
+index 746e8583e..df36a7799 100644
+--- a/pyscf/lib/misc.py
++++ b/pyscf/lib/misc.py
+@@ -109,17 +109,19 @@ def load_library(libname):
+ #Fixme, the standard resource module gives wrong number when objects are released
+ # http://fa.bianp.net/blog/2013/different-ways-to-get-memory-consumption-or-lessons-learned-from-memory_profiler/#fn:1
+ #or use slow functions as memory_profiler._get_memory did
+-CLOCK_TICKS = os.sysconf("SC_CLK_TCK")
+-PAGESIZE = os.sysconf("SC_PAGE_SIZE")
+ def current_memory():
+     '''Return the size of used memory and allocated virtual memory (in MB)'''
+-    #import resource
+-    #return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1000
+-    if sys.platform.startswith('linux'):
+-        with open("/proc/%s/statm" % os.getpid()) as f:
+-            vms, rss = [int(x)*PAGESIZE for x in f.readline().split()[:2]]
+-            return rss/1e6, vms/1e6
+-    else:
++    try:
++        import psutil
++        process = psutil.Process(os.getpid())
++        mem_info = process.memory_info()
++        rss = mem_info.rss
++        vms = mem_info.vms
++        return rss/1e6, vms/1e6
++    except (ImportError, Exception):
++        if sys.platform.startswith('linux'):
++            import resource
++            return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1e6, 0
+         return 0, 0
+ 
+ def num_threads(n=None):

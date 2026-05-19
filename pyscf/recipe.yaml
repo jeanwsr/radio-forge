@@ -2,6 +2,7 @@
 context:
   name: pyscf
   version: 2.13.0
+  build_num: 2
 
 package:
   name: ${{ name }}
@@ -12,11 +13,12 @@ source:
   sha256: b0f22880d918d3ae7cf6abb5629c457d2e58a572e22695ee849b17efa05c57d2
   patches:
     - 0001-remove-stderr-from-openmp-shared.patch
+    - 0002-win-compat.patch
 
 build:
   python:
     version_independent: true
-  number: ${{ 1 + 100 * microarch_level }}
+  number: ${{ (build_num | int) + 100 * microarch_level }}
   script:
     - if: unix
       then:
@@ -60,6 +62,8 @@ requirements:
       then:
         - libgomp
   run:
+    - if: win
+      then: psutil
     - h5py >=2.7
     - numpy >=1.13,!=1.16,!=1.17
     - python
