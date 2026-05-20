@@ -68,6 +68,7 @@ requirements:
     - numpy >=1.13,!=1.16,!=1.17
     - python
     - scipy >=0.19,!=1.5.0,!=1.5
+    - setuptools
     - if: x86_64
       then:
         - _x86_64-microarch-level >=${{ microarch_level }}
@@ -90,20 +91,22 @@ tests:
             - pyscf
             - pyscf.dft
           pip_check: true
-      - script:
-          - cp pyscf_conf.py .pyscf_conf.py
-          - pytest pyscf/lib pyscf/scf -s -c pytest.ini --no-cov
-        requirements:
-          run:
-            - pip
-            - pytest
-            - setuptools
-        files:
-          source:
-            - pytest.ini
-            - pyscf
-          recipe:
-            - pyscf_conf.py
+      - if: unix
+        then:
+          - script:
+              - cp pyscf_conf.py .pyscf_conf.py
+              - pytest pyscf/lib pyscf/scf -s -c pytest.ini --no-cov
+            requirements:
+              run:
+                - pip
+                - pytest
+                - setuptools
+            files:
+              source:
+                - pytest.ini
+                - pyscf
+              recipe:
+                - pyscf_conf.py
 
 extra:
   recipe-maintainers:
