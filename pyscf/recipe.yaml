@@ -111,7 +111,7 @@ tests:
       - if: win
         then:
           - script:
-              - python -c "from pyscf import gto, scf; mol=gto.M(atom='H 0 0 0; H 0 0 0.74', basis='sto-3g'); mf=scf.RHF(mol); e=mf.kernel(); assert mf.converged"
+              - python -c "from pyscf import gto, scf; mol=gto.M(atom='H 0 0 0; H 0 0 0.74', basis='sto-3g'); mf=scf.RHF(mol); mf.chkfile=None; e=mf.kernel(); assert mf.converged"
 
 extra:
   recipe-maintainers:
