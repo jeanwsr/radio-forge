@@ -88,3 +88,17 @@ index 746e8583e..df36a7799 100644
          return 0, 0
  
  def num_threads(n=None):
+diff --git a/setup.py b/setup.py
+index 67ed61cba..3cbe6a551 100755
+--- a/setup.py
++++ b/setup.py
+@@ -61,6 +61,9 @@ class CMakeBuildPy(build_py):
+         self.announce('Configuring extensions', level=3)
+         src_dir = os.path.abspath(os.path.join(__file__, '..', 'pyscf', 'lib'))
+         cmd = ['cmake', f'-S{src_dir}', f'-B{self.build_temp}']
++        # On Windows, DLLs go to CMAKE_BINARY_DIR by default. Route them to pyscf/lib
++        # alongside .so/.dylib on other platforms.
++        cmd.append(f'-DCMAKE_RUNTIME_OUTPUT_DIRECTORY={src_dir}')
+         configure_args = os.getenv('CMAKE_CONFIGURE_ARGS')
+         if configure_args:
+             cmd.extend(configure_args.split(' '))
