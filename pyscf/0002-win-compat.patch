@@ -1,3 +1,21 @@
+diff --git a/MANIFEST.in b/MANIFEST.in
+index 469d803cf..97b9bc8fa 100644
+--- a/MANIFEST.in
++++ b/MANIFEST.in
+@@ -11,6 +11,13 @@ include pyscf/lib/deps/lib*/libcint.[4-9].dylib
+ include pyscf/lib/deps/lib*/libxc.*.dylib
+ include pyscf/lib/deps/lib*/libxcfun.[2-9].dylib
+ 
++# windows dynamic libraries
++include pyscf/lib/*.dll
++include pyscf/lib/deps/bin/*.dll
++include pyscf/lib/deps/lib*/libcint.dll
++include pyscf/lib/deps/lib*/libxc.dll
++include pyscf/lib/deps/lib*/libxcfun.dll
++
+ include pyscf/geomopt/log.ini
+ include pyscf/gto/basis/bse_meta.json
+ 
 diff --git a/examples/2-benchmark/benchmarking_utils.py b/examples/2-benchmark/benchmarking_utils.py
 index 78e3c37ea..7d9882a23 100644
 --- a/examples/2-benchmark/benchmarking_utils.py
