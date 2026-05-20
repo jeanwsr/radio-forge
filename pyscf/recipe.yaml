@@ -2,7 +2,7 @@
 context:
   name: pyscf
   version: 2.13.0
-  build_num: 6
+  build_num: 7
 
 package:
   name: ${{ name }}
@@ -33,8 +33,7 @@ build:
         - set CMAKE_GENERATOR_TOOLSET=
         - set CMAKE_BUILD_PARALLEL_LEVEL=4
         - set LDFLAGS=%LDFLAGS% -L%LIBRARY_PREFIX%\bin
-        - set CMAKE_SHARED_LINKER_FLAGS=-Wl,--disable-auto-import
-        - set CMAKE_CONFIGURE_ARGS=%CMAKE_ARGS% -DCMAKE_C_COMPILER=%CC% -DCMAKE_CXX_COMPILER=%CXX% -DBLAS_LIBRARIES=lapack;blas -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%LIBRARY_PREFIX% -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_SHARED_LIBS=ON -DBUILD_LIBCINT=OFF -DBUILD_LIBXC=OFF -DBUILD_XCFUN=OFF -LAH
+        - set CMAKE_CONFIGURE_ARGS=%CMAKE_ARGS% -DCMAKE_C_COMPILER=%CC% -DCMAKE_CXX_COMPILER=%CXX% -DCMAKE_SHARED_LINKER_FLAGS=-Wl,--disable-auto-import -DCMAKE_EXE_LINKER_FLAGS=-Wl,--disable-auto-import -DBLAS_LIBRARIES=lapack;blas -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%LIBRARY_PREFIX% -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_SHARED_LIBS=ON -DBUILD_LIBCINT=OFF -DBUILD_LIBXC=OFF -DBUILD_XCFUN=OFF -LAH
         - call %PYTHON% -m pip install . -vv
 
 requirements:
@@ -82,6 +81,28 @@ about:
   license: Apache-2.0
   license_file: LICENSE
   repository: https://github.com/pyscf/pyscf
+
+tests:
+  - if: (microarch_level != 4)
+    then:
+      - python:
+          imports:
+            - pyscf
+            - pyscf.dft
+          pip_check: true
+      - script:
+          - cp pyscf_conf.py .pyscf_conf.py
+          - pytest pyscf/lib pyscf/scf -s -c pytest.ini --no-cov
+        requirements:
+          run:
+            - pip
+            - pytest
+        files:
+          source:
+            - pytest.ini
+            - pyscf
+          recipe:
+            - pyscf_conf.py
 
 extra:
   recipe-maintainers:
