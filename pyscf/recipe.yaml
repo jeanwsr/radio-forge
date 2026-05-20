@@ -2,7 +2,7 @@
 context:
   name: pyscf
   version: 2.13.0
-  build_num: 7
+  build_num: 8
 
 package:
   name: ${{ name }}
@@ -35,7 +35,7 @@ build:
         - set CMAKE_BUILD_PARALLEL_LEVEL=4
         - set LDFLAGS=%LDFLAGS% -L%LIBRARY_PREFIX%\bin
         - copy %LIBRARY_PREFIX%\bin\libcint.dll pyscf\lib\
-        - set CMAKE_CONFIGURE_ARGS=%CMAKE_ARGS% -DCMAKE_C_COMPILER=%CC% -DCMAKE_CXX_COMPILER=%CXX% -DCMAKE_C_FLAGS=-fno-semantic-interposition -DBLAS_LIBRARIES=lapack;blas -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%LIBRARY_PREFIX% -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_SHARED_LIBS=ON -DBUILD_LIBCINT=OFF -DBUILD_LIBXC=OFF -DBUILD_XCFUN=OFF -LAH
+        - set CMAKE_CONFIGURE_ARGS=%CMAKE_ARGS% -DCMAKE_C_COMPILER=%CC% -DCMAKE_CXX_COMPILER=%CXX% -DBLAS_LIBRARIES=lapack;blas -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%LIBRARY_PREFIX% -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_SHARED_LIBS=ON -DBUILD_LIBCINT=OFF -DBUILD_LIBXC=OFF -DBUILD_XCFUN=OFF -LAH
         - call %PYTHON% -m pip install . -vv
 
 requirements:
@@ -111,7 +111,7 @@ tests:
       - if: win
         then:
           - script:
-              - python -c "from pyscf import gto, scf; mol=gto.M(atom='H 0 0 0; H 0 0 0.74', basis='sto-3g'); mf=scf.RHF(mol); mf.chkfile=None; e=mf.kernel(); assert mf.converged"
+              - python -c "from pyscf import gto, scf; mol=gto.M(atom='H 0 0 0; H 0 0 0.74', basis='sto-3g'); mf=mol.RKS(); mf.chkfile=None; e=mf.kernel(); assert mf.converged"
 
 extra:
   recipe-maintainers:
