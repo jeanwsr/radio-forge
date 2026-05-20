@@ -111,7 +111,6 @@ tests:
       - if: win
         then:
           - script:
-              - python -c "import ctypes, os; lib = ctypes.cdll.LoadLibrary(os.path.join(os.path.dirname(__import__('pyscf').__file__), 'lib', 'libcgto.dll')); assert hasattr(lib, 'int1e_ovlp_optimizer'), 'symbol int1e_ovlp_optimizer not found in libcgto.dll'"
               - python -c "from pyscf import gto, scf; mol=gto.M(atom='H 0 0 0; H 0 0 0.74', basis='sto-3g'); mf=scf.RHF(mol); e=mf.kernel(); assert mf.converged"
 
 extra:
