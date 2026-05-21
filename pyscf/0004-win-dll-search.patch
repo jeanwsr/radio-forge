@@ -8,7 +8,7 @@ index 5e7db2f38..6ac0aa552 100644
  _itrf = lib.load_library('libxc_itrf')
 +
 +if sys.platform == 'win32':
-+    libxc = lib.load_library('libxc')
++    libxc = lib.load_library('xc')
 +    class _LibXcItrf:
 +        def __init__(self, itrf, xc):
 +            object.__setattr__(self, '_itrf', itrf)
@@ -40,7 +40,7 @@ index e90fded66..63e262f30 100644
  _itrf = lib.load_library('libxcfun_itrf')
  
 +if sys.platform == 'win32':
-+    libxcfun = lib.load_library('libxcfun')
++    libxcfun = lib.load_library('xcfun')
 +    class _LibXcfunItrf:
 +        def __init__(self, itrf, xcfun):
 +            object.__setattr__(self, '_itrf', itrf)
