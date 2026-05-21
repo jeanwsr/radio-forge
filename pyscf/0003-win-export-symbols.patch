@@ -74,7 +74,7 @@ index 60f404849..d479e9e4e 100644
  if (WIN32)
 -  #?
 +  set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
-+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -static-libgomp")
++  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -femulated-tls")
  elseif (APPLE)
    set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
    set(CMAKE_INSTALL_RPATH "@loader_path;@loader_path/deps/lib;@loader_path/deps/lib64")
