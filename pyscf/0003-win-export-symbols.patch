@@ -65,15 +65,18 @@ index 96c3cba03..3067a12f5 100644
  NPRIM_OF   = 2
  NCTR_OF    = 3
 diff --git a/pyscf/lib/CMakeLists.txt b/pyscf/lib/CMakeLists.txt
-index 60f404849..f1179375e 100644
+index 60f404849..f8f0564d9 100644
 --- a/pyscf/lib/CMakeLists.txt
 +++ b/pyscf/lib/CMakeLists.txt
-@@ -128,7 +128,7 @@ include_directories("${PROJECT_BINARY_DIR}")
+@@ -128,7 +128,10 @@ include_directories("${PROJECT_BINARY_DIR}")
  
  # See also https://gitlab.kitware.com/cmake/community/wikis/doc/cmake/RPATH-handling
  if (WIN32)
 -  #?
 +  set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
++  if (CMAKE_C_COMPILER_ID MATCHES "Clang")
++    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Dcomplex=_Complex")
++  endif()
  elseif (APPLE)
    set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
    set(CMAKE_INSTALL_RPATH "@loader_path;@loader_path/deps/lib;@loader_path/deps/lib64")
