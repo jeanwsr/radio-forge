@@ -17,6 +17,7 @@ source:
     - 0003-win-export-symbols.patch
     - 0005-win-pbc-cint.patch
     - 0006-win-xc-wrappers.patch
+    - 0007-win-more-wrappers.patch
 
 build:
   python:
@@ -112,7 +113,9 @@ tests:
       - if: win
         then:
           - script:
-              - python -c "from pyscf import gto, scf; mol=gto.M(atom='H 0 0 0; H 0 0 0.74', basis='sto-3g'); mf=mol.RKS(); mf.chkfile=None; e=mf.kernel(); assert mf.converged"
+              - set PYTHONFAULTHANDLER=1
+              - python -c "import faulthandler; faulthandler.enable(); import sys; steps=['pyscf','pyscf.gto','pyscf.scf','pyscf.dft','pyscf.dft.libxc','pyscf.dft.numint','pyscf.dft.rks']; [print(f'Importing {s}...') or __import__(s,fromlist=['']) or print(f'  OK') for s in steps]; print('All imports OK')"
+              - python -c "import faulthandler; faulthandler.enable(); import sys; print('Loading gto...'); from pyscf import gto; print('Loading scf...'); from pyscf import scf; print('Creating mol...'); mol=gto.M(atom='H 0 0 0; H 0 0 0.74', basis='sto-3g'); print('Creating RKS...'); mf=mol.RKS(); mf.chkfile=None; print('Running kernel...'); e=mf.kernel(); print(f'Energy={e} converged={mf.converged}'); assert mf.converged"
 
 extra:
   recipe-maintainers:
