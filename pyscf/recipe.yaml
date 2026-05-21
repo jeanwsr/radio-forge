@@ -63,9 +63,6 @@ requirements:
     - if: linux
       then:
         - libgomp
-    - if: win
-      then:
-        - llvm-openmp
   run:
     - if: win
       then: psutil
