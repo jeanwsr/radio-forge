@@ -16,6 +16,7 @@ source:
     - 0002-win-compat.patch
     - 0003-win-export-symbols.patch
     - 0005-win-pbc-cint.patch
+    - 0006-win-xc-wrappers.patch
 
 build:
   python:
