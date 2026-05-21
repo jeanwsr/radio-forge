@@ -55,11 +55,69 @@ index 78e3c37ea..7d9882a23 100644
      log.note('OMP_NUM_THREADS=%s\n', os.environ.get('OMP_NUM_THREADS', None))
      return log
  
+diff --git a/pyscf/dft/numint.py b/pyscf/dft/numint.py
+index dfb2ef26a..c75831ea3 100644
+--- a/pyscf/dft/numint.py
++++ b/pyscf/dft/numint.py
+@@ -22,6 +22,7 @@ Numerical integration functions for RKS and UKS with real AO basis
+ 
+ import warnings
+ import ctypes
++import sys
+ import numpy
+ from pyscf import lib
+ try:
+@@ -39,6 +40,11 @@ from pyscf.dft import xc_deriv
+ from pyscf import __config__
+ 
+ libdft = lib.load_library('libdft')
++if sys.platform == 'win32':
++    libcvhf = lib.load_library('libcvhf')
++    libcgto = lib.load_library('libcgto')
++    libcint = lib.load_library('libcint')
++    libdft = lib.make_dll_wrapper(libdft, libcvhf, libcgto, libcint)
+ OCCDROP = getattr(__config__, 'dft_numint_occdrop', 1e-12)
+ # The system size above which to consider the sparsity of the density matrix.
+ # If the number of AOs in the system is less than this value, all tensors are
 diff --git a/pyscf/lib/misc.py b/pyscf/lib/misc.py
-index 746e8583e..df36a7799 100644
+index 746e8583e..e12243705 100644
 --- a/pyscf/lib/misc.py
 +++ b/pyscf/lib/misc.py
-@@ -109,17 +109,19 @@ def load_library(libname):
+@@ -97,6 +97,13 @@ def load_library(libname):
+         _loaderpath = os.path.dirname(__file__)
+         return numpy.ctypeslib.load_library(libname, _loaderpath)
+     except OSError:
++        if sys.platform == 'win32':
++            for env_path in [os.path.join(sys.prefix, 'Library', 'bin'),
++                             os.path.join(sys.prefix, 'Library', 'lib')]:
++                try:
++                    return numpy.ctypeslib.load_library(libname, env_path)
++                except OSError:
++                    pass
+         from pyscf import __path__ as ext_modules
+         for path in ext_modules:
+             libpath = os.path.join(path, 'lib')
+@@ -106,20 +113,39 @@ def load_library(libname):
+                         return numpy.ctypeslib.load_library(libname, libpath)
+         raise
+ 
++
++def make_dll_wrapper(lib, *fallbacks):
++    if sys.platform != 'win32':
++        return lib
++    class _DllWrapper:
++        def __init__(self, primary, *fallbacks):
++            object.__setattr__(self, '_primary', primary)
++            object.__setattr__(self, '_fallbacks', fallbacks)
++        def __getattr__(self, name):
++            for dll in (self._primary,) + self._fallbacks:
++                try:
++                    return getattr(dll, name)
++                except AttributeError:
++                    pass
++            raise AttributeError(f"function '{name}' not found")
++    return _DllWrapper(lib, *fallbacks)
++
  #Fixme, the standard resource module gives wrong number when objects are released
  # http://fa.bianp.net/blog/2013/different-ways-to-get-memory-consumption-or-lessons-learned-from-memory_profiler/#fn:1
  #or use slow functions as memory_profiler._get_memory did
