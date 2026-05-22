@@ -37,7 +37,7 @@ build:
         - set CMAKE_GENERATOR_TOOLSET=
         - set CMAKE_BUILD_PARALLEL_LEVEL=4
         - set LDFLAGS=%LDFLAGS% -L%LIBRARY_PREFIX%\bin
-        - copy %PREFIX%\Library\bin\mkl_rt.dll %PREFIX%\Library\lib\libmkl_rt.a
+        - for %f in (%PREFIX%\Library\bin\mkl_rt*.dll) do if not exist %PREFIX%\Library\lib\libmkl_rt.a copy %f %PREFIX%\Library\lib\libmkl_rt.a
         - set CMAKE_CONFIGURE_ARGS=%CMAKE_ARGS% -DCMAKE_C_COMPILER=%CC% -DCMAKE_CXX_COMPILER=%CXX% -DBLAS_LIBRARIES=mkl_rt -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%LIBRARY_PREFIX% -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_SHARED_LIBS=ON -DBUILD_LIBCINT=OFF -DBUILD_LIBXC=OFF -DBUILD_XCFUN=OFF -LAH
         - call %PYTHON% -m pip install . -vv
 
