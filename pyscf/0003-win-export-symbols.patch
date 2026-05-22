@@ -1,0 +1,108 @@
+diff --git a/pyscf/ao2mo/_ao2mo.py b/pyscf/ao2mo/_ao2mo.py
+index a2b04b458..07f05641f 100644
+--- a/pyscf/ao2mo/_ao2mo.py
++++ b/pyscf/ao2mo/_ao2mo.py
+@@ -14,15 +14,29 @@
+ # limitations under the License.
+ 
+ import ctypes
+-import _ctypes
++import sys
+ import numpy
+ from pyscf import lib
+ from pyscf.gto.moleintor import make_cintopt, make_loc, ascint3
+ from pyscf.scf import _vhf
+ 
+ libao2mo = lib.load_library('libao2mo')
++
++if sys.platform == 'win32':
++    libcint = lib.load_library('libcint')
++    class _LibAo2mo:
++        def __init__(self, ao2mo, cint):
++            object.__setattr__(self, '_ao2mo', ao2mo)
++            object.__setattr__(self, '_cint', cint)
++        def __getattr__(self, name):
++            try:
++                return getattr(self._ao2mo, name)
++            except AttributeError:
++                return getattr(self._cint, name)
++    libao2mo = _LibAo2mo(libao2mo, libcint)
++
+ def _fpointer(name):
+-    return ctypes.c_void_p(_ctypes.dlsym(libao2mo._handle, name))
++    return ctypes.cast(getattr(libao2mo, name), ctypes.c_void_p)
+ 
+ class AO2MOpt:
+     def __init__(self, mol, intor, prescreen='CVHFnoscreen', qcondname=None):
+diff --git a/pyscf/gto/moleintor.py b/pyscf/gto/moleintor.py
+index 96c3cba03..3067a12f5 100644
+--- a/pyscf/gto/moleintor.py
++++ b/pyscf/gto/moleintor.py
+@@ -23,11 +23,25 @@ Mole.intor method to drive the integral evaluation functions.
+ 
+ import warnings
+ import ctypes
++import sys
+ import numpy
+ from pyscf import lib
+ 
+ libcgto = lib.load_library('libcgto')
+ 
++if sys.platform == 'win32':
++    libcint = lib.load_library('libcint')
++    class _LibCgto:
++        def __init__(self, cgto, cint):
++            object.__setattr__(self, '_cgto', cgto)
++            object.__setattr__(self, '_cint', cint)
++        def __getattr__(self, name):
++            try:
++                return getattr(self._cgto, name)
++            except AttributeError:
++                return getattr(self._cint, name)
++    libcgto = _LibCgto(libcgto, libcint)
++
+ ANG_OF     = 1
+ NPRIM_OF   = 2
+ NCTR_OF    = 3
+diff --git a/pyscf/lib/CMakeLists.txt b/pyscf/lib/CMakeLists.txt
+index 60f404849..d479e9e4e 100644
+--- a/pyscf/lib/CMakeLists.txt
++++ b/pyscf/lib/CMakeLists.txt
+@@ -128,7 +128,8 @@ include_directories("${PROJECT_BINARY_DIR}")
+ 
+ # See also https://gitlab.kitware.com/cmake/community/wikis/doc/cmake/RPATH-handling
+ if (WIN32)
+-  #?
++  set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
++  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--disable-runtime-pseudo-reloc")
+ elseif (APPLE)
+   set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+   set(CMAKE_INSTALL_RPATH "@loader_path;@loader_path/deps/lib;@loader_path/deps/lib64")
+diff --git a/pyscf/scf/_vhf.py b/pyscf/scf/_vhf.py
+index 65833914b..18204f394 100644
+--- a/pyscf/scf/_vhf.py
++++ b/pyscf/scf/_vhf.py
+@@ -22,8 +22,22 @@ from pyscf import gto
+ from pyscf.gto.moleintor import make_cintopt, make_loc, ascint3
+ 
+ libcvhf = lib.load_library('libcvhf')
++
++if sys.platform == 'win32':
++    libcint = lib.load_library('libcint')
++    class _LibCvhf:
++        def __init__(self, cvhf, cint):
++            object.__setattr__(self, '_cvhf', cvhf)
++            object.__setattr__(self, '_cint', cint)
++        def __getattr__(self, name):
++            try:
++                return getattr(self._cvhf, name)
++            except AttributeError:
++                return getattr(self._cint, name)
++    libcvhf = _LibCvhf(libcvhf, libcint)
++
+ def _fpointer(name):
+-    return ctypes.c_void_p(_ctypes.dlsym(libcvhf._handle, name))
++    return ctypes.cast(getattr(libcvhf, name), ctypes.c_void_p)
+ 
+ class VHFOpt:
+     def __init__(self, mol, intor=None,

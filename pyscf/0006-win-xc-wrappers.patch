@@ -1,0 +1,70 @@
+diff --git a/pyscf/dft/libxc.py b/pyscf/dft/libxc.py
+index 5e7db2f38..46d74f377 100644
+--- a/pyscf/dft/libxc.py
++++ b/pyscf/dft/libxc.py
+@@ -45,6 +45,20 @@ from pyscf.dft import xc_deriv
+ from pyscf import __config__
+ 
+ _itrf = lib.load_library('libxc_itrf')
++
++if sys.platform == 'win32':
++    libxc = lib.load_library('xc')
++    class _LibXcItrf:
++        def __init__(self, itrf, xc):
++            object.__setattr__(self, '_itrf', itrf)
++            object.__setattr__(self, '_xc', xc)
++        def __getattr__(self, name):
++            try:
++                return getattr(self._itrf, name)
++            except AttributeError:
++                return getattr(self._xc, name)
++    _itrf = _LibXcItrf(_itrf, libxc)
++
+ _itrf.LIBXC_is_lda.restype = ctypes.c_int
+ _itrf.LIBXC_is_gga.restype = ctypes.c_int
+ _itrf.LIBXC_is_meta_gga.restype = ctypes.c_int
+diff --git a/pyscf/dft/xcfun.py b/pyscf/dft/xcfun.py
+index e90fded66..87f90e99a 100644
+--- a/pyscf/dft/xcfun.py
++++ b/pyscf/dft/xcfun.py
+@@ -23,6 +23,7 @@ U. Ekstrom et al, J. Chem. Theory Comput., 6, 1971
+ '''
+ 
+ import ctypes
++import sys
+ from functools import lru_cache
+ import math
+ import numpy
+@@ -31,7 +32,22 @@ from pyscf.dft.xc.utils import remove_dup, format_xc_code
+ from pyscf.dft import xc_deriv
+ from pyscf import __config__
+ 
+-_itrf = lib.load_library('libxcfun_itrf')
++_itrf_raw = lib.load_library('libxcfun_itrf')
++
++if sys.platform == 'win32':
++    xcfun = lib.load_library('xcfun')
++    class _LibXcfunItrf:
++        def __init__(self, itrf, xcfun):
++            object.__setattr__(self, '_itrf', itrf)
++            object.__setattr__(self, '_xcfun', xcfun)
++        def __getattr__(self, name):
++            try:
++                return getattr(self._itrf, name)
++            except AttributeError:
++                return getattr(self._xcfun, name)
++    _itrf = _LibXcfunItrf(_itrf_raw, xcfun)
++else:
++    _itrf = _itrf_raw
+ 
+ _itrf.xcfun_splash.restype = ctypes.c_char_p
+ _itrf.xcfun_version.restype = ctypes.c_char_p
+@@ -306,7 +322,7 @@ RSH_XC = {'CAMB3LYP'}
+ 
+ # The compatibility with the old libxcfun_itrf.so library
+ try:
+-    MAX_DERIV_ORDER = ctypes.c_int.in_dll(_itrf, 'XCFUN_max_deriv_order').value
++    MAX_DERIV_ORDER = ctypes.c_int.in_dll(_itrf_raw, 'XCFUN_max_deriv_order').value
+ except ValueError:
+     MAX_DERIV_ORDER = 3
+ 

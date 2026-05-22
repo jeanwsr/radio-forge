@@ -1,7 +1,8 @@
 
 context:
   name: pyscf
-  version: 2.9.0
+  version: 2.13.0
+  build_num: 9
 
 package:
   name: ${{ name }}
@@ -9,31 +10,55 @@ package:
 
 source:
   url: https://github.com/pyscf/pyscf/archive/refs/tags/v${{ version }}.tar.gz
-  sha256: 4407f515f3173dc6f8df2d2e889a2fbaac0279ea04d5d38ceb4753a63a5a222a
+  sha256: b0f22880d918d3ae7cf6abb5629c457d2e58a572e22695ee849b17efa05c57d2
+  patches:
+    - 0001-remove-stderr-from-openmp-shared.patch
+    - 0002-win-compat.patch
+    - 0003-win-export-symbols.patch
+    - 0005-win-pbc-cint.patch
+    - 0006-win-xc-wrappers.patch
+    - 0007-win-more-wrappers.patch
 
 build:
   python:
     version_independent: true
-  number: ${{ 1 + 100 * microarch_level }}
-  script: |
-    if ((${{ microarch_level }} > 1)); then
-    export CFLAGS="${CFLAGS} -march=x86-64-v${{ microarch_level }} -mtune=cascadelake";
-    export CXXFLAGS="${CXXFLAGS} -march=x86-64-v${{ microarch_level }} -mtune=cascadelake";
-    fi
-    export CMAKE_BUILD_PARALLEL_LEVEL=4
-    export CMAKE_CONFIGURE_ARGS="${CMAKE_ARGS} -DBLAS_LIBRARIES=lapack;blas -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$PREFIX -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_SHARED_LIBS=ON -DBUILD_LIBCINT=OFF -DBUILD_LIBXC=OFF -DBUILD_XCFUN=OFF -LAH"
-    ${{ PYTHON }} -m pip install . -vv
+  number: ${{ (build_num | int) + 100 * microarch_level }}
+  script:
+    - if: unix
+      then:
+        - if [ "${{ microarch_level }}" -gt 1 ]; then export CFLAGS="${CFLAGS} -march=x86-64-v${{ microarch_level }} -mtune=cascadelake"; export CXXFLAGS="${CXXFLAGS} -march=x86-64-v${{ microarch_level }} -mtune=cascadelake"; fi
+        - export CMAKE_BUILD_PARALLEL_LEVEL=4
+        - export CMAKE_CONFIGURE_ARGS="${CMAKE_ARGS} -DBLAS_LIBRARIES=lapack;blas -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$PREFIX -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_SHARED_LIBS=ON -DBUILD_LIBCINT=OFF -DBUILD_LIBXC=OFF -DBUILD_XCFUN=OFF -LAH"
+        - ${{ PYTHON }} -m pip install . -vv
+    - if: win
+      then:
+        - set CMAKE_GENERATOR=Ninja
+        - set CMAKE_GENERATOR_PLATFORM=
+        - set CMAKE_GENERATOR_TOOLSET=
+        - set CMAKE_BUILD_PARALLEL_LEVEL=4
+        - set LDFLAGS=%LDFLAGS% -L%LIBRARY_PREFIX%\bin
+        - python -c "import glob, shutil, os; src=glob.glob(os.path.join(os.environ['PREFIX'], 'Library', 'bin', 'mkl_rt*.dll')); dst=os.path.join(os.environ['PREFIX'], 'Library', 'lib', 'libmkl_rt.a'); shutil.copy(src[0], dst) if src else None"
+        - set CMAKE_CONFIGURE_ARGS=%CMAKE_ARGS% -DCMAKE_C_COMPILER=%CC% -DCMAKE_CXX_COMPILER=%CXX% -DBLAS_LIBRARIES=mkl_rt -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%LIBRARY_PREFIX% -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_SHARED_LIBS=ON -DBUILD_LIBCINT=OFF -DBUILD_LIBXC=OFF -DBUILD_XCFUN=OFF -LAH
+        - call %PYTHON% -m pip install . -vv
 
 requirements:
   build:
-    - ${{ compiler('c') }}
-    - ${{ compiler('cxx') }}
+    - if: win
+      then: gcc_win-64
+      else: ${{ compiler('c') }}
+    - if: win
+      then: gxx_win-64
+      else: ${{ compiler('cxx') }}
     - cmake >=3.10
+    - if: win
+      then: ninja
     - python
     - setuptools
   host:
-    - libblas
-    - qcint
+    - if: win
+      then: mkl
+      else: libblas
+    - libcint
     - libxc-c >=6,<8
     - make
     - pip
@@ -44,10 +69,13 @@ requirements:
       then:
         - libgomp
   run:
+    - if: win
+      then: psutil
     - h5py >=2.7
     - numpy >=1.13,!=1.16,!=1.17
     - python
     - scipy >=0.19,!=1.5.0,!=1.5
+    - setuptools
     - if: x86_64
       then:
         - _x86_64-microarch-level >=${{ microarch_level }}
@@ -61,6 +89,38 @@ about:
   license: Apache-2.0
   license_file: LICENSE
   repository: https://github.com/pyscf/pyscf
+
+# tests:
+#   - if: (microarch_level != 4)
+#     then:
+#       - python:
+#           imports:
+#             - pyscf
+#           pip_check: true
+#       - if: unix
+#         then:
+#           - script:
+#               - cp pyscf_conf.py .pyscf_conf.py
+#               - pytest pyscf/lib pyscf/scf -s -c pytest.ini
+#             requirements:
+#               run:
+#                 - pip
+#                 - pytest
+#                 - setuptools
+#             files:
+#               source:
+#                 - pytest.ini
+#                 - pyscf
+#               recipe:
+#                 - pyscf_conf.py
+#       - if: win
+#         then:
+#           - script:
+#               - set PYTHONFAULTHANDLER=1
+#               - python -c "import faulthandler; faulthandler.enable(); import sys; steps=['pyscf','pyscf.gto','pyscf.scf','pyscf.dft','pyscf.dft.libxc','pyscf.dft.numint','pyscf.dft.rks']; [print(f'Importing {s}...') or __import__(s,fromlist=['']) or print(f'  OK') for s in steps]; print('All imports OK')"
+#               - python -c "import ctypes, sys, os; libdir = os.path.join(sys.prefix, 'Library', 'bin'); print('Library/bin DLLs:'); [print(f'  {f}') for f in os.listdir(libdir) if f.endswith('.dll')]"
+#               - python -c "import ctypes, sys, os; os.add_dll_directory(os.path.join(sys.prefix, 'Library', 'bin')); lib = ctypes.CDLL('libnp_helper.dll'); print('libnp_helper loaded OK'); print('Has NPdgemm:', hasattr(lib, 'NPdgemm'))"
+#               - python -c "import faulthandler; faulthandler.enable(); import sys; print('Loading gto...'); from pyscf import gto; print('Loading scf...'); from pyscf import scf; print('Creating mol...'); mol=gto.M(atom='H 0 0 0; H 0 0 0.74', basis='sto-3g'); print('Creating RKS...'); mf=mol.RKS(); mf.chkfile=None; print('Running kernel...'); e=mf.kernel(); print(f'Energy={e} converged={mf.converged}'); assert mf.converged"
 
 extra:
   recipe-maintainers:

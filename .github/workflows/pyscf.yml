@@ -11,15 +11,15 @@ permissions:
 
 jobs:
   build:
-    if: false
     strategy:
       matrix:
-        target:
-          - linux-64
-        os:
-          - ubuntu-latest
-        packagedir:
-          - pyscf
+        include:
+          - os: ubuntu-latest
+            target: linux-64
+            packagedir: pyscf
+          - os: windows-latest
+            target: win-64
+            packagedir: pyscf
       fail-fast: false
 
     runs-on: ${{ matrix.os }}
@@ -31,6 +31,7 @@ jobs:
         with:
           pixi-version: v0.47.0
           cache: true
+          locked: false
 
       - name: Run code in changed subdirectories
         shell: bash
@@ -42,9 +43,9 @@ jobs:
         run: |
           pixi run rattler-build build --recipe-dir $PACKAGEDIR \
             --skip-existing=all --target-platform=$TARGET_PLATFORM \
-            -c chillenb -c conda-forge
+            -c restgroup -c conda-forge
 
           # ignore errors because we want to ignore duplicate packages
           for file in output/**/*.conda; do
-            pixi run rattler-build upload anaconda -o chillenb "$file" || true
+            pixi run rattler-build upload anaconda -o restgroup "$file" || true
           done
