@@ -13,31 +13,33 @@ source:
     - 0001-Fix-test-location.patch
 
 build:
-  number: 0
+  number: 1
   script:
     - if: unix
       then:
-        - cmake ${CMAKE_ARGS} -DCMAKE_C_COMPILER=${CC} -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$PREFIX -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_SHARED_LIBS=ON -S . -B build
+        - cmake ${CMAKE_ARGS} -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$PREFIX -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_SHARED_LIBS=ON -S . -B build -G Ninja -DWITH_F12=ON -DWITH_RANGE_COULOMB=ON -DWITH_COULOMB_ERF=ON
         - cmake --build build -j ${CPU_COUNT}
         - cmake --install build
     - if: win
       then:
-        - set CMAKE_GENERATOR=
-        - set CMAKE_GENERATOR_PLATFORM=
-        - set CMAKE_GENERATOR_TOOLSET=
-        - cmake -G "Ninja" %CMAKE_ARGS% -DCMAKE_C_COMPILER=%CC% -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%LIBRARY_PREFIX% -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_SHARED_LIBS=ON -S . -B build
+        # - set CMAKE_GENERATOR=
+        # - set CMAKE_GENERATOR_PLATFORM=
+        # - set CMAKE_GENERATOR_TOOLSET=
+        - cmake %CMAKE_ARGS% -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=%LIBRARY_PREFIX% -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_SHARED_LIBS=ON -S %SRC_DIR% -B build -G "Ninja" -DWITH_F12=ON -DWITH_RANGE_COULOMB=ON -DWITH_COULOMB_ERF=ON
         - cmake --build build --parallel %CPU_COUNT%
         - cmake --install build
 
 requirements:
   build:
     - if: win
-      then: gcc_win-64
+      then: ${{ compiler('m2w64_c') }}
       else: ${{ compiler('c') }}
     - if: win
-      then: ninja
+      then: ${{ stdlib('m2w64_c') }}
+      else: ${{ stdlib('c') }}
+    - ninja
     - cmake
-    - make
+    #- make
   run_exports:
     - ${{ pin_subpackage(name, lower_bound="x.x", upper_bound="x.x") }}
 
