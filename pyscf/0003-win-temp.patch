@@ -1,0 +1,3040 @@
+diff --git a/CHANGELOG b/CHANGELOG
+index 03bcbd0f8..ddd2c0950 100644
+--- a/CHANGELOG
++++ b/CHANGELOG
+@@ -1,12 +1,3 @@
+-PySCF 2.13.1 (2026-06-01)
+--------------------------
+-* Fixes
+-  - Missing CP2K basis set data in wheel distributions
+-  - Small-rotor error.
+-  - Corrected SG1 grid radii handling for ghost atoms.
+-  - Fixed ECP loading to correctly fall back to Basis Set Exchange when local data is unavailable.
+-
+-
+ PySCF 2.13.0 (2026-04-20)
+ -------------------------
+ * Added
+diff --git a/MANIFEST.in b/MANIFEST.in
+index 5597f6e05..469d803cf 100644
+--- a/MANIFEST.in
++++ b/MANIFEST.in
+@@ -15,8 +15,8 @@ include pyscf/geomopt/log.ini
+ include pyscf/gto/basis/bse_meta.json
+ 
+ # CP2K basis set
+-include pyscf/pbc/gto/basis/*BASIS*
+-include pyscf/pbc/gto/pseudo/*POTENTIAL*
++include pyscf/lib/pbc/gto/basis/*BASIS*
++include pyscf/lib/pbc/gto/pseudo/*POTENTIAL*
+ 
+ # source code
+ recursive-include pyscf/lib *.c *.h CMakeLists.txt
+diff --git a/README.md b/README.md
+index 9632434de..82544d08c 100644
+--- a/README.md
++++ b/README.md
+@@ -7,9 +7,9 @@ Python-based Simulations of Chemistry Framework
+ [![Build Status](https://github.com/pyscf/pyscf/workflows/CI/badge.svg)](https://github.com/pyscf/pyscf/actions?query=workflow%3ACI)
+ [![codecov](https://codecov.io/gh/pyscf/pyscf/branch/master/graph/badge.svg)](https://codecov.io/gh/pyscf/pyscf)
+ 
+-2026-06-01
++2026-04-20
+ 
+-* [Stable release 2.13.1](https://github.com/pyscf/pyscf/releases/tag/v2.13.1)
++* [Stable release 2.13.0](https://github.com/pyscf/pyscf/releases/tag/v2.13.0)
+ * [Changelog](../master/CHANGELOG)
+ * [Documentation](http://www.pyscf.org)
+ * [Installation](#installation)
+diff --git a/examples/ao2mo/01-outcore.py b/examples/ao2mo/01-outcore.py
+index a175441e8..70fd796d3 100644
+--- a/examples/ao2mo/01-outcore.py
++++ b/examples/ao2mo/01-outcore.py
+@@ -3,9 +3,9 @@
+ # Author: Qiming Sun <osirpt.sun@gmail.com>
+ #
+ 
+-import tempfile
+ import h5py
+ from pyscf import gto, scf, ao2mo
++from pyscf import lib
+ 
+ '''
+ Save the transformed integrals in the given file in HDF5 format
+@@ -22,7 +22,7 @@ myhf = scf.RHF(mol)
+ myhf.kernel()
+ 
+ orb = myhf.mo_coeff
+-ftmp = tempfile.NamedTemporaryFile()
++ftmp = lib.NamedTemporaryFile()
+ print('MO integrals are saved in file  %s  under dataset "eri_mo"' % ftmp.name)
+ ao2mo.kernel(mol, orb, ftmp.name)
+ 
+diff --git a/examples/ao2mo/10-diff_orbs_for_ijkl.py b/examples/ao2mo/10-diff_orbs_for_ijkl.py
+index e2ac7240c..6af4a3fb7 100644
+--- a/examples/ao2mo/10-diff_orbs_for_ijkl.py
++++ b/examples/ao2mo/10-diff_orbs_for_ijkl.py
+@@ -3,10 +3,10 @@
+ # Author: Qiming Sun <osirpt.sun@gmail.com>
+ #
+ 
+-import tempfile
+ import numpy
+ import h5py
+ from pyscf import gto, scf, ao2mo
++from pyscf import lib
+ 
+ '''
+ Integral transformation for four different orbitals
+@@ -39,7 +39,7 @@ print('E = %.15g, ref -230.776765415' % e)
+ #
+ # Given four MOs, compute the MO-integrals and saved in dataset "mp2_bz"
+ #
+-eritmp = tempfile.NamedTemporaryFile()
++eritmp = lib.NamedTemporaryFile()
+ nocc = mol.nelectron // 2
+ nvir = len(mf.mo_energy) - nocc
+ co = mf.mo_coeff[:,:nocc]
+diff --git a/examples/ao2mo/11-ump2.py b/examples/ao2mo/11-ump2.py
+index cbb66405d..b1642b215 100644
+--- a/examples/ao2mo/11-ump2.py
++++ b/examples/ao2mo/11-ump2.py
+@@ -3,7 +3,6 @@
+ # Author: Qiming Sun <osirpt.sun@gmail.com>
+ #
+ 
+-import tempfile
+ import numpy
+ import h5py
+ from pyscf import gto, scf, ao2mo
+diff --git a/examples/ao2mo/20-eri_grad_hess.py b/examples/ao2mo/20-eri_grad_hess.py
+index aefd32f85..22e739280 100644
+--- a/examples/ao2mo/20-eri_grad_hess.py
++++ b/examples/ao2mo/20-eri_grad_hess.py
+@@ -3,10 +3,10 @@
+ # Author: Qiming Sun <osirpt.sun@gmail.com>
+ #
+ 
+-import tempfile
+ import numpy
+ import h5py
+ from pyscf import gto, scf, ao2mo
++from pyscf import lib
+ 
+ '''
+ Integral transformation for irregular operators
+@@ -28,7 +28,7 @@ print('E = %.15g, ref -76.0267656731' % e)
+ #
+ # Given four MOs, compute the MO-integral gradients
+ #
+-gradtmp = tempfile.NamedTemporaryFile()
++gradtmp = lib.NamedTemporaryFile()
+ nocc = mol.nelectron // 2
+ nvir = len(mf.mo_energy) - nocc
+ co = mf.mo_coeff[:,:nocc]
+@@ -56,7 +56,7 @@ print('gradient integrals (d/dR i j|kl) have shape %s == (3,%dx%d,%dx%d)'
+ #       9       d/dZ  d/dZ
+ #
+ orb = mf.mo_coeff
+-hesstmp = tempfile.NamedTemporaryFile()
++hesstmp = lib.NamedTemporaryFile()
+ ao2mo.kernel(mol, orb, hesstmp.name, intor='cint2e_ipvip1_sph',
+              dataname='hessints1', aosym='s4')
+ with ao2mo.load(hesstmp, 'hessints1') as eri:
+diff --git a/examples/ao2mo/22-rkb_no_pair_ints.py b/examples/ao2mo/22-rkb_no_pair_ints.py
+index e0c0ee221..319c676eb 100644
+--- a/examples/ao2mo/22-rkb_no_pair_ints.py
++++ b/examples/ao2mo/22-rkb_no_pair_ints.py
+@@ -10,7 +10,6 @@ from pyscf import gto
+ from pyscf import scf
+ from pyscf import lib
+ from pyscf.ao2mo import r_outcore
+-import tempfile
+ import os
+ 
+ mol = gto.M(
+@@ -53,7 +52,7 @@ def no_pair_ovov(mol, mo_coeff, erifile):
+ 
+         def run_and_add(mol, mos, erifile, dataname_main, intor):
+             # Use a temporary file for the intermediate integrals
+-            with tempfile.NamedTemporaryFile(suffix=".h5", delete=False) as tmpfile:
++            with lib.NamedTemporaryFile(suffix=".h5", delete=False) as tmpfile:
+                 tmp_erifile = tmpfile.name
+ 
+             try:
+diff --git a/examples/df/01-auxbasis.py b/examples/df/01-auxbasis.py
+index 523b9e301..df0136800 100644
+--- a/examples/df/01-auxbasis.py
++++ b/examples/df/01-auxbasis.py
+@@ -10,7 +10,6 @@ The format and input convention of auxbasis are the same to the AO basis.
+ See also examples/gto/04-input_basis.py
+ '''
+ 
+-import tempfile
+ from pyscf import gto, scf, df
+ 
+ #
+diff --git a/examples/df/40-precompute_df_integrals.py b/examples/df/40-precompute_df_integrals.py
+index 38b36245a..13cddcc35 100644
+--- a/examples/df/40-precompute_df_integrals.py
++++ b/examples/df/40-precompute_df_integrals.py
+@@ -10,12 +10,12 @@ calculations.  The time-consuming DF integral generation can be done once and
+ reused many times.
+ '''
+ 
+-import tempfile
+ from pyscf import gto, scf, df
++from pyscf import lib
+ from pyscf.pbc import gto as pgto
+ from pyscf.pbc import dft as pdft
+ 
+-tmpf = tempfile.NamedTemporaryFile()
++tmpf = lib.NamedTemporaryFile()
+ file_to_save_df_ints = tmpf.name
+ print('DF integral is saved in %s' % file_to_save_df_ints)
+ 
+diff --git a/examples/gto/01-input_geometry.py b/examples/gto/01-input_geometry.py
+index 96a433460..6fba4e8db 100644
+--- a/examples/gto/01-input_geometry.py
++++ b/examples/gto/01-input_geometry.py
+@@ -14,6 +14,7 @@ PySCF supports input molecule geometry in
+ 
+ import numpy
+ from pyscf import gto
++from pyscf import lib
+ 
+ #
+ # Input Cartesian coordinates
+@@ -127,8 +128,7 @@ mol.build()
+ # Read geometry from a file. If the file name is assigned to mol.atom, the
+ # build method will guess the file format and parse the contents accordingly
+ #
+-import tempfile
+-with tempfile.NamedTemporaryFile(mode='w', suffix='.xyz') as f:
++with lib.NamedTemporaryFile(mode='w', suffix='.xyz') as f:
+     f.write('''3
+ 
+ O 0 0 0
+diff --git a/examples/mcscf/13-load_chkfile.py b/examples/mcscf/13-load_chkfile.py
+index e25c68259..096d9c2a8 100644
+--- a/examples/mcscf/13-load_chkfile.py
++++ b/examples/mcscf/13-load_chkfile.py
+@@ -3,7 +3,7 @@
+ # Author: Qiming Sun <osirpt.sun@gmail.com>
+ #
+ 
+-import tempfile
++import os
+ import h5py
+ from pyscf import gto, scf, mcscf
+ from pyscf import lib
+@@ -14,7 +14,8 @@ key:value format.  Keys in chkfile are the same to the attributes of SCF and
+ MCSCF objects.
+ '''
+ 
+-tmpchk = tempfile.NamedTemporaryFile()
++
++
+ 
+ mol = gto.Mole()
+ mol.atom = 'C 0 0 0; C 0 0 1.2'
+@@ -22,11 +23,12 @@ mol.basis = 'ccpvdz'
+ mol.build()
+ 
+ mf = scf.RHF(mol)
+-mf.chkfile = tmpchk.name
++chkname = os.path.join(lib.param.TMPDIR, '13-load_chkfile.chk')
++mf.chkfile = chkname
+ mf.kernel()
+ 
+ mc = mcscf.CASSCF(mf, 6, 6)
+-mc.chkfile = tmpchk.name
++mc.chkfile = chkname
+ mc.max_cycle_macro = 1
+ mc.kernel()
+ 
+@@ -35,7 +37,7 @@ mc.kernel()
+ # Scenario 1: Using h5py to read quantities in chkfile
+ #
+ 
+-with h5py.File(tmpchk.name) as f:
++with h5py.File(chkname) as f:
+     print('Keys in chkfile', f.keys)
+     print('Keys in mcscf group', f['mcscf'].keys)
+     mcscf_orb = f['mcscf/mo_coeff'].value
+@@ -44,12 +46,12 @@ with h5py.File(tmpchk.name) as f:
+ #
+ # Scenario 2: Using lib.chkfile module
+ #
+-mol = lib.chkfile.load_mol(tmpchk.name)
+-mcscf_orb = lib.chkfile.load(tmpchk.name, 'mcscf/mo_coeff')
++mol = lib.chkfile.load_mol(chkname)
++mcscf_orb = lib.chkfile.load(chkname, 'mcscf/mo_coeff')
+ 
+ #
+ # Scenario 3: Using Python trick to quickly load scf/mcscf
+ # intermediates/results
+ #
+ mc = mcscf.CASSCF(mf, 6, 6)
+-mc.__dict__.update(lib.chkfile.load(tmpchk.name, 'mcscf'))
++mc.__dict__.update(lib.chkfile.load(chkname, 'mcscf'))
+diff --git a/examples/mcscf/13-restart.py b/examples/mcscf/13-restart.py
+index a6846d17f..5aea906fc 100644
+--- a/examples/mcscf/13-restart.py
++++ b/examples/mcscf/13-restart.py
+@@ -3,7 +3,7 @@
+ # Author: Qiming Sun <osirpt.sun@gmail.com>
+ #
+ 
+-import tempfile
++import os
+ from pyscf import gto, scf, mcscf
+ from pyscf import lib
+ 
+@@ -19,25 +19,25 @@ CASSCF intermediate results.  Then we can "restart" the calculation from the
+ intermediate results.
+ '''
+ 
+-tmpchk = tempfile.NamedTemporaryFile()
+-
+ mol = gto.Mole()
+ mol.atom = 'C 0 0 0; C 0 0 1.2'
+ mol.basis = 'ccpvdz'
+ mol.build()
+ 
++chkname = os.path.join(lib.param.TMPDIR, '13-restart.chk')
+ mf = scf.RHF(mol)
++mf.chkfile = chkname
+ mf.kernel()
+ 
+ mc = mcscf.CASSCF(mf, 6, 6)
+-mc.chkfile = tmpchk.name
++mc.chkfile = chkname
+ mc.max_cycle_macro = 1
+ mc.kernel()
+ 
+ #######################################################################
+ #
+ # Assuming the CASSCF was interrupted.  Intermediate data were saved in
+-# tmpchk file.  Here we read the chkfile to restart the previous calculation.
++# chkname file.  Here we read the chkfile to restart the previous calculation.
+ #
+ #######################################################################
+ mol = gto.Mole()
+@@ -46,11 +46,11 @@ mol.basis = 'ccpvdz'
+ mol.build()
+ 
+ mc = mcscf.CASSCF(scf.RHF(mol), 6, 6)
+-mo = lib.chkfile.load(tmpchk.name, 'mcscf/mo_coeff')
++mo = lib.chkfile.load(chkname, 'mcscf/mo_coeff')
+ mc.kernel(mo)
+ 
+ # Assuming you lose all memory about the previous calculation.
+ # Restart the calculation with chkfile only.
+-mol, mcdata = mcscf.chkfile.load_mcscf(tmpchk.name)
+-mc = mcscf.CASSCF(mol, mcdata['ncas'], mcdata['nelecas']).update_from_chk(tmpchk.name)
++mol, mcdata = mcscf.chkfile.load_mcscf(chkname)
++mc = mcscf.CASSCF(mol, mcdata['ncas'], mcdata['nelecas']).update_from_chk(chkname)
+ mc.kernel()
+diff --git a/examples/mcscf/41-mcscf_custom_df_hamiltonian.py b/examples/mcscf/41-mcscf_custom_df_hamiltonian.py
+index 8ef946579..8ba2a00c4 100644
+--- a/examples/mcscf/41-mcscf_custom_df_hamiltonian.py
++++ b/examples/mcscf/41-mcscf_custom_df_hamiltonian.py
+@@ -3,9 +3,9 @@
+ # Author: Qiming Sun <osirpt.sun@gmail.com>
+ #
+ 
+-import tempfile
+ import h5py
+ from pyscf import gto, df, scf, mcscf
++from pyscf import lib
+ 
+ '''
+ Using the Cholesky decomposed 2-electron integrals to define the Hamiltonian in CASSCF
+@@ -33,7 +33,7 @@ mc.kernel()
+ #
+ # Integrals on disk
+ #
+-ftmp = tempfile.NamedTemporaryFile()
++ftmp = lib.NamedTemporaryFile()
+ df.outcore.cholesky_eri(mol, ftmp.name, auxbasis='ccpvdz-fit')
+ 
+ with h5py.File(ftmp.name, 'r') as file1:
+diff --git a/examples/scf/15-initial_guess.py b/examples/scf/15-initial_guess.py
+index 98807bd96..03f9480f0 100644
+--- a/examples/scf/15-initial_guess.py
++++ b/examples/scf/15-initial_guess.py
+@@ -11,7 +11,6 @@ guess.  If not given, SCF constructs an atomic density superposition for the
+ initial guess.
+ '''
+ 
+-import tempfile
+ from pyscf import gto
+ from pyscf import scf
+ 
+@@ -38,10 +37,7 @@ mol = gto.M(
+     basis = 'cc-pVDZ',
+ )
+ 
+-tmp_chkfile = tempfile.NamedTemporaryFile()
+-chkfile_name = tmp_chkfile.name
+ mf = scf.RHF(mol)
+-mf.chkfile = chkfile_name
+ mf.kernel(dm_init_guess)
+ 
+ # If a numpy array is assigned to the attribute .init_guess, it will be used
+diff --git a/examples/scf/41-hf_with_given_densityfit_ints.py b/examples/scf/41-hf_with_given_densityfit_ints.py
+index 364b4804f..5d772b270 100644
+--- a/examples/scf/41-hf_with_given_densityfit_ints.py
++++ b/examples/scf/41-hf_with_given_densityfit_ints.py
+@@ -10,9 +10,9 @@ See also:
+ examples/df/40-precompute_df_ints.py
+ '''
+ 
+-import tempfile
+ import h5py
+ from pyscf import gto, df, scf
++from pyscf import lib
+ 
+ mol = gto.M(atom='H 0 0 0; F 0 0 1', basis='ccpvdz')
+ 
+@@ -20,7 +20,7 @@ mol = gto.M(atom='H 0 0 0; F 0 0 1', basis='ccpvdz')
+ int3c = df.incore.cholesky_eri(mol, auxbasis='ccpvdz-fit')
+ 
+ # Integrals on disk
+-ftmp = tempfile.NamedTemporaryFile()
++ftmp = lib.NamedTemporaryFile()
+ df.outcore.cholesky_eri(mol, ftmp.name, auxbasis='ccpvdz-fit')
+ 
+ 
+diff --git a/pyscf/__init__.py b/pyscf/__init__.py
+index 37fd9a907..571b5fad3 100644
+--- a/pyscf/__init__.py
++++ b/pyscf/__init__.py
+@@ -35,7 +35,7 @@ to try out the package::
+ 
+ '''
+ 
+-__version__ = '2.13.1'
++__version__ = '2.13.0'
+ 
+ import os
+ import sys
+diff --git a/pyscf/adc/radc_amplitudes.py b/pyscf/adc/radc_amplitudes.py
+index 02f978c8d..5996c52d6 100644
+--- a/pyscf/adc/radc_amplitudes.py
++++ b/pyscf/adc/radc_amplitudes.py
+@@ -565,5 +565,5 @@ def _create_t2_h5cache():
+     as a temporary workaround before figuring out a better solution to handle
+     big t2 amplitudes.
+     '''
+-    tmpfile = tempfile.NamedTemporaryFile(dir=lib.param.TMPDIR)
++    tmpfile = lib.NamedTemporaryFile(dir=lib.param.TMPDIR)
+     return h5py.File(tmpfile.name, 'w')
+diff --git a/pyscf/agf2/test/test_ragf2_h2o.py b/pyscf/agf2/test/test_ragf2_h2o.py
+index 6f890638d..d395309a4 100644
+--- a/pyscf/agf2/test/test_ragf2_h2o.py
++++ b/pyscf/agf2/test/test_ragf2_h2o.py
+@@ -17,7 +17,6 @@
+ #
+ 
+ import unittest
+-import tempfile
+ import numpy as np
+ import h5py
+ from pyscf import gto, scf, agf2, lib
+@@ -29,8 +28,8 @@ class KnownValues(unittest.TestCase):
+     def setUpClass(self):
+         self.mol = gto.M(atom='O 0 0 0; H 0 0 1; H 0 1 0', basis='cc-pvdz', verbose=0)
+         self.mf = scf.RHF(self.mol)
+-        self.mf.chkfile = tempfile.NamedTemporaryFile().name
+         self.mf.conv_tol = 1e-12
++        self.mf.chkfile = lib.NamedTemporaryFile().name
+         self.mf.run()
+         self.gf2 = agf2.RAGF2(self.mf)
+         self.gf2.conv_tol = 1e-7
+diff --git a/pyscf/agf2/test/test_uagf2_beh.py b/pyscf/agf2/test/test_uagf2_beh.py
+index 081e06b4e..68857d127 100644
+--- a/pyscf/agf2/test/test_uagf2_beh.py
++++ b/pyscf/agf2/test/test_uagf2_beh.py
+@@ -17,7 +17,6 @@
+ #
+ 
+ import unittest
+-import tempfile
+ import numpy as np
+ from pyscf import gto, scf, agf2, lib
+ 
+@@ -28,8 +27,8 @@ class KnownValues(unittest.TestCase):
+     def setUpClass(self):
+         self.mol = gto.M(atom='Be 0 0 0; H 0 0 1', basis='cc-pvdz', spin=1, verbose=0)
+         self.mf = scf.UHF(self.mol)
+-        self.mf.chkfile = tempfile.NamedTemporaryFile().name
+         self.mf.conv_tol = 1e-12
++        self.mf.chkfile = lib.NamedTemporaryFile().name
+         self.mf.run()
+         self.gf2 = agf2.UAGF2(self.mf)
+         self.gf2.conv_tol = 1e-7
+@@ -72,9 +71,9 @@ class KnownValues(unittest.TestCase):
+     def test_uagf2_outcore(self):
+         # tests the out-of-core and chkfile support for AGF2 for BeH/cc-pvdz
+         gf2 = agf2.UAGF2(self.mf)
+-        gf2.chkfile = tempfile.NamedTemporaryFile().name
+         gf2.max_memory = 1
+         gf2.conv_tol = 1e-7
++        gf2.chkfile = lib.NamedTemporaryFile().name
+         gf2.run()
+         e_ip, v_ip = self.gf2.ipagf2(nroots=1)
+         e_ea, v_ea = self.gf2.eaagf2(nroots=1)
+diff --git a/pyscf/ao2mo/nrr_outcore.py b/pyscf/ao2mo/nrr_outcore.py
+index 39556e07a..7572e6d17 100644
+--- a/pyscf/ao2mo/nrr_outcore.py
++++ b/pyscf/ao2mo/nrr_outcore.py
+@@ -18,7 +18,6 @@ ao2mo of scalar integrals to complex MO integrals for GHF orbitals
+ '''
+ 
+ import time
+-import tempfile
+ import numpy
+ import h5py
+ import ctypes
+@@ -124,7 +123,7 @@ def general(mol, mo_coeffs, erifile, dataname='eri_mo',
+               float(nij_pair)*nkl_pair*comp, nij_pair*nkl_pair*comp*16/1e6)
+ 
+ # transform e1
+-    swapfile = tempfile.NamedTemporaryFile(dir=lib.param.TMPDIR)
++    swapfile = lib.NamedTemporaryFile(dir=lib.param.TMPDIR)
+     half_e1(mol, (mo_alph, mo_beta), swapfile.name, intor, aosym, comp,
+             max_memory, ioblk_size, log)
+     time_1pass = log.timer('AO->MO transformation for %s 1 pass'%intor,
+@@ -189,7 +188,7 @@ def general(mol, mo_coeffs, erifile, dataname='eri_mo',
+ def full_iofree(mol, mo_coeff, dataname='eri_mo', intor='int2e_sph',
+                 motype='ghf', aosym='s1', comp=None, verbose=logger.debug,
+                 **kwargs):
+-    erifile = tempfile.NamedTemporaryFile(dir=lib.param.TMPDIR)
++    erifile = lib.NamedTemporaryFile(dir=lib.param.TMPDIR)
+     general(mol, (mo_coeff,)*4, erifile.name, dataname='eri_mo',
+             intor=intor, motype=motype, aosym=aosym, comp=comp,
+             verbose=verbose)
+@@ -199,7 +198,7 @@ def full_iofree(mol, mo_coeff, dataname='eri_mo', intor='int2e_sph',
+ def general_iofree(mol, mo_coeffs, dataname='eri_mo', intor='int2e_sph',
+                    motype='ghf', aosym='s1', comp=None, verbose=logger.debug,
+                    **kwargs):
+-    erifile = tempfile.NamedTemporaryFile(dir=lib.param.TMPDIR)
++    erifile = lib.NamedTemporaryFile(dir=lib.param.TMPDIR)
+     general(mol, mo_coeffs, erifile.name, dataname='eri_mo',
+             intor=intor, motype=motype, aosym=aosym, comp=comp,
+             verbose=verbose)
+diff --git a/pyscf/ao2mo/r_outcore.py b/pyscf/ao2mo/r_outcore.py
+index 2c77b5f89..66b4ce7ae 100644
+--- a/pyscf/ao2mo/r_outcore.py
++++ b/pyscf/ao2mo/r_outcore.py
+@@ -14,7 +14,6 @@
+ # limitations under the License.
+ 
+ 
+-import tempfile
+ import numpy
+ import h5py
+ from pyscf import lib
+@@ -103,7 +102,7 @@ def general(mol, mo_coeffs, erifile, dataname='eri_mo',
+               float(nij_pair)*nkl_pair*comp, nij_pair*nkl_pair*comp*16/1e6)
+ 
+ # transform e1
+-    swapfile = tempfile.NamedTemporaryFile(dir=lib.param.TMPDIR)
++    swapfile = lib.NamedTemporaryFile(dir=lib.param.TMPDIR)
+     half_e1(mol, mo_coeffs, swapfile.name, intor, aosym, comp,
+             max_memory, ioblk_size, log)
+ 
+@@ -253,7 +252,7 @@ def half_e1(mol, mo_coeffs, swapfile,
+ 
+ def full_iofree(mol, mo_coeff, intor='int2e_spinor', aosym='s4', comp=None,
+                 verbose=logger.WARN, **kwargs):
+-    erifile = tempfile.NamedTemporaryFile(dir=lib.param.TMPDIR)
++    erifile = lib.NamedTemporaryFile(dir=lib.param.TMPDIR)
+     general(mol, (mo_coeff,)*4, erifile.name, dataname='eri_mo',
+             intor=intor, aosym=aosym, comp=comp,
+             verbose=verbose)
+@@ -262,7 +261,7 @@ def full_iofree(mol, mo_coeff, intor='int2e_spinor', aosym='s4', comp=None,
+ 
+ def general_iofree(mol, mo_coeffs, intor='int2e_spinor', aosym='s4', comp=None,
+                    verbose=logger.WARN, **kwargs):
+-    erifile = tempfile.NamedTemporaryFile(dir=lib.param.TMPDIR)
++    erifile = lib.NamedTemporaryFile(dir=lib.param.TMPDIR)
+     general(mol, mo_coeffs, erifile.name, dataname='eri_mo',
+             intor=intor, aosym=aosym, comp=comp,
+             verbose=verbose)
+diff --git a/pyscf/ao2mo/semi_incore.py b/pyscf/ao2mo/semi_incore.py
+index f5a488b83..11de1fda6 100644
+--- a/pyscf/ao2mo/semi_incore.py
++++ b/pyscf/ao2mo/semi_incore.py
+@@ -290,7 +290,7 @@ if __name__ == '__main__':
+     onnn2 = ao2mo.incore.general(mf._eri, (orbo,mo_coeff,mo_coeff,mo_coeff))
+     print('    Time elapsed (s): ',logger.perf_counter() - start_time)
+ 
+-    tmpfile2 = tempfile.NamedTemporaryFile(dir=lib.param.TMPDIR)
++    tmpfile2 = lib.NamedTemporaryFile(dir=lib.param.TMPDIR)
+ 
+     print('\n\nCustom outcore transformation ...')
+     orbo = mo_coeff[:,:nocc]
+diff --git a/pyscf/ao2mo/test/test_incore.py b/pyscf/ao2mo/test/test_incore.py
+index befa0a484..430c7e00c 100644
+--- a/pyscf/ao2mo/test/test_incore.py
++++ b/pyscf/ao2mo/test/test_incore.py
+@@ -16,7 +16,6 @@
+ import ctypes
+ import unittest
+ from functools import reduce
+-import tempfile
+ import numpy
+ import h5py
+ from pyscf import lib
+diff --git a/pyscf/ao2mo/test/test_init.py b/pyscf/ao2mo/test/test_init.py
+index 21641746c..66322ef86 100644
+--- a/pyscf/ao2mo/test/test_init.py
++++ b/pyscf/ao2mo/test/test_init.py
+@@ -16,7 +16,6 @@
+ import ctypes
+ import unittest
+ from functools import reduce
+-import tempfile
+ import numpy
+ import h5py
+ from pyscf import lib
+@@ -80,7 +79,7 @@ class KnowValues(unittest.TestCase):
+         with ao2mo.load(h5file, 'eri') as eri:
+             self.assertEqual(eri.shape, (10,10))
+ 
+-        ftmp = tempfile.NamedTemporaryFile()
++        ftmp = lib.NamedTemporaryFile()
+         ao2mo.kernel(mol, mo, ftmp, intor='int2e', dataname='eri')
+         with ao2mo.load(ftmp, 'eri') as eri:
+             self.assertEqual(eri.shape, (10,10))
+@@ -97,7 +96,7 @@ class KnowValues(unittest.TestCase):
+         ao2mo.kernel(mol, [mo]*4, erifile=h5file, intor='int2e', dataname='eri')
+         self.assertEqual(h5file['eri'].shape, (10,10))
+ 
+-        ftmp = tempfile.NamedTemporaryFile()
++        ftmp = lib.NamedTemporaryFile()
+         ao2mo.kernel(mol, [mo]*4, ftmp, intor='int2e', dataname='eri')
+         with ao2mo.load(ftmp.name, 'eri') as eri:
+             self.assertEqual(eri.shape, (10,10))
+diff --git a/pyscf/ao2mo/test/test_nrr_outcore.py b/pyscf/ao2mo/test/test_nrr_outcore.py
+index a81e275b3..2f2c16218 100644
+--- a/pyscf/ao2mo/test/test_nrr_outcore.py
++++ b/pyscf/ao2mo/test/test_nrr_outcore.py
+@@ -14,7 +14,6 @@
+ # limitations under the License.
+ 
+ import unittest
+-import tempfile
+ import numpy as np
+ import h5py
+ from pyscf import lib
+diff --git a/pyscf/ao2mo/test/test_outcore.py b/pyscf/ao2mo/test/test_outcore.py
+index 6dcd76644..dc6e3a62d 100644
+--- a/pyscf/ao2mo/test/test_outcore.py
++++ b/pyscf/ao2mo/test/test_outcore.py
+@@ -16,7 +16,6 @@
+ import ctypes
+ import unittest
+ from functools import reduce
+-import tempfile
+ import numpy
+ import h5py
+ from pyscf import lib
+@@ -47,7 +46,7 @@ def tearDownModule():
+ 
+ class KnownValues(unittest.TestCase):
+     def test_nroutcore_grad(self):
+-        ftmp = tempfile.NamedTemporaryFile(dir=lib.param.TMPDIR)
++        ftmp = lib.NamedTemporaryFile(dir=lib.param.TMPDIR)
+         erifile = ftmp.name
+         eri_ao = mol.intor('int2e_ip1', aosym='s1').reshape(3,nao,nao,nao,nao)
+         eriref = numpy.einsum('npjkl,pi->nijkl', eri_ao, mo)
+@@ -64,7 +63,7 @@ class KnownValues(unittest.TestCase):
+         self.assertTrue(numpy.allclose(eri1, eriref))
+ 
+     def test_nroutcore_eri(self):
+-        ftmp = tempfile.NamedTemporaryFile(dir=lib.param.TMPDIR)
++        ftmp = lib.NamedTemporaryFile(dir=lib.param.TMPDIR)
+         erifile = ftmp.name
+         eri_ao = ao2mo.restore(1, mol.intor('int2e', aosym='s2kl'), nao)
+         eriref = numpy.einsum('pjkl,pi->ijkl', eri_ao, mo)
+diff --git a/pyscf/ao2mo/test/test_r_outcore.py b/pyscf/ao2mo/test/test_r_outcore.py
+index 271968f95..66d9263da 100644
+--- a/pyscf/ao2mo/test/test_r_outcore.py
++++ b/pyscf/ao2mo/test/test_r_outcore.py
+@@ -14,7 +14,6 @@
+ # limitations under the License.
+ 
+ import unittest
+-import tempfile
+ import numpy
+ from pyscf import lib
+ from pyscf import gto
+@@ -51,7 +50,7 @@ class KnownValues(unittest.TestCase):
+         numpy.random.seed(1)
+         mo = numpy.random.random((n2c,n2c)) + numpy.random.random((n2c,n2c))*1j
+         eriref = trans(eri0, [mo]*4)
+-        ftmp = tempfile.NamedTemporaryFile()
++        ftmp = lib.NamedTemporaryFile()
+ 
+         ao2mo.kernel(mol, mo, erifile=ftmp.name, intor='int2e_spinor', max_memory=10, ioblk_size=5)
+         with ao2mo.load(ftmp) as eri1:
+diff --git a/pyscf/ao2mo/test/test_semi_incore.py b/pyscf/ao2mo/test/test_semi_incore.py
+index 8271c7b05..0fc95fbd0 100644
+--- a/pyscf/ao2mo/test/test_semi_incore.py
++++ b/pyscf/ao2mo/test/test_semi_incore.py
+@@ -16,7 +16,6 @@
+ import ctypes
+ import unittest
+ from functools import reduce
+-import tempfile
+ import numpy
+ import h5py
+ from pyscf import lib
+@@ -46,7 +45,7 @@ class KnowValues(unittest.TestCase):
+         mo = numpy.random.random((nao,nmo))
+         eriref = ao2mo.incore.full(eri, mo)
+ 
+-        tmpfile = tempfile.NamedTemporaryFile(dir=lib.param.TMPDIR)
++        tmpfile = lib.NamedTemporaryFile(dir=lib.param.TMPDIR)
+         io_size = nao**2*4e-5
+ 
+         semi_incore.general(eri, [mo]*4, tmpfile.name, ioblk_size=io_size)
+@@ -67,7 +66,7 @@ class KnowValues(unittest.TestCase):
+                             mo.conj(), mo, mo.conj(), mo)
+         eriref = eriref.reshape(12**2,12**2)
+ 
+-        tmpfile = tempfile.NamedTemporaryFile(dir=lib.param.TMPDIR)
++        tmpfile = lib.NamedTemporaryFile(dir=lib.param.TMPDIR)
+         io_size = nao**2*4e-5
+ 
+         semi_incore.general(eri, [mo]*4, tmpfile.name, ioblk_size=io_size)
+diff --git a/pyscf/cc/test/test_ccsd_lambda.py b/pyscf/cc/test/test_ccsd_lambda.py
+index 3bbc7d0eb..831185325 100644
+--- a/pyscf/cc/test/test_ccsd_lambda.py
++++ b/pyscf/cc/test/test_ccsd_lambda.py
+@@ -13,7 +13,6 @@
+ # See the License for the specific language governing permissions and
+ # limitations under the License.
+ 
+-import tempfile
+ import unittest
+ import numpy
+ from functools import reduce
+@@ -112,7 +111,7 @@ class KnownValues(unittest.TestCase):
+         self.assertAlmostEqual(numpy.dot(numpy.sin(l2new.flatten()), numpy.arange(35**2)), 507.656936701192, 8)
+ 
+     def test_restart(self):
+-        ftmp = tempfile.NamedTemporaryFile()
++        ftmp = lib.NamedTemporaryFile()
+         cc1 = mycc.copy()
+         cc1.max_cycle = 5
+         cc1.solve_lambda()
+diff --git a/pyscf/cc/test/test_rccsd.py b/pyscf/cc/test/test_rccsd.py
+index ff77224da..d53cfb221 100644
+--- a/pyscf/cc/test/test_rccsd.py
++++ b/pyscf/cc/test/test_rccsd.py
+@@ -13,7 +13,6 @@
+ # See the License for the specific language governing permissions and
+ # limitations under the License.
+ 
+-import tempfile
+ from functools import reduce
+ import unittest
+ import copy
+@@ -43,8 +42,8 @@ def setUpModule():
+     mol.basis = '631g'
+     mol.build()
+     mf = scf.RHF(mol)
+-    mf.chkfile = tempfile.NamedTemporaryFile().name
+     mf.conv_tol_grad = 1e-8
++    mf.chkfile = lib.NamedTemporaryFile().name
+     mf.kernel()
+ 
+     mycc = rccsd.RCCSD(mf)
+@@ -152,7 +151,7 @@ class KnownValues(unittest.TestCase):
+         self.assertAlmostEqual(cc1.e_corr, -0.13516622806104395, 7)
+ 
+     def test_restart(self):
+-        ftmp = tempfile.NamedTemporaryFile()
++        ftmp = lib.NamedTemporaryFile()
+         cc1 = cc.CCSD(mf)
+         cc1.max_cycle = 5
+         cc1.kernel()
+diff --git a/pyscf/cc/test/test_rccsdt.py b/pyscf/cc/test/test_rccsdt.py
+index 90fc4ef60..5e2ea5ec8 100644
+--- a/pyscf/cc/test/test_rccsdt.py
++++ b/pyscf/cc/test/test_rccsdt.py
+@@ -13,7 +13,6 @@
+ # See the License for the specific language governing permissions and
+ # limitations under the License.
+ 
+-import tempfile
+ from functools import reduce
+ import unittest
+ import copy
+@@ -41,8 +40,8 @@ def setUpModule():
+     mol.basis = '631g'
+     mol.build()
+     mf = scf.RHF(mol)
+-    mf.chkfile = tempfile.NamedTemporaryFile().name
+     mf.conv_tol_grad = 1e-8
++    mf.chkfile = lib.NamedTemporaryFile().name
+     mf.kernel()
+ 
+     mycc = rccsdt.RCCSDT(mf)
+@@ -138,7 +137,7 @@ class KnownValues(unittest.TestCase):
+         self.assertAlmostEqual(cc1.e_corr, -0.1362172678103062, 7)
+ 
+     def test_restart(self):
+-        ftmp = tempfile.NamedTemporaryFile()
++        ftmp = lib.NamedTemporaryFile()
+         cc1 = cc.RCCSDT(mf)
+         cc1.max_cycle = 5
+         cc1.kernel()
+diff --git a/pyscf/cc/test/test_rccsdt_highm.py b/pyscf/cc/test/test_rccsdt_highm.py
+index 6232b636e..6201ec263 100644
+--- a/pyscf/cc/test/test_rccsdt_highm.py
++++ b/pyscf/cc/test/test_rccsdt_highm.py
+@@ -13,7 +13,6 @@
+ # See the License for the specific language governing permissions and
+ # limitations under the License.
+ 
+-import tempfile
+ from functools import reduce
+ import unittest
+ import copy
+@@ -42,8 +41,8 @@ def setUpModule():
+     mol.basis = '631g'
+     mol.build()
+     mf = scf.RHF(mol)
+-    mf.chkfile = tempfile.NamedTemporaryFile().name
+     mf.conv_tol_grad = 1e-8
++    mf.chkfile = lib.NamedTemporaryFile().name
+     mf.kernel()
+ 
+     mycc = rccsdt_highm.RCCSDT(mf)
+@@ -95,7 +94,7 @@ class KnownValues(unittest.TestCase):
+         self.assertAlmostEqual(cc1.e_corr, -0.1362172678103062, 7)
+ 
+     def test_restart(self):
+-        ftmp = tempfile.NamedTemporaryFile()
++        ftmp = lib.NamedTemporaryFile()
+         cc1 = cc.RCCSDT(mf, compact_tamps=False)
+         cc1.max_cycle = 5
+         cc1.kernel()
+diff --git a/pyscf/cc/test/test_rccsdtq.py b/pyscf/cc/test/test_rccsdtq.py
+index 361a722dc..e1846b6d9 100644
+--- a/pyscf/cc/test/test_rccsdtq.py
++++ b/pyscf/cc/test/test_rccsdtq.py
+@@ -13,7 +13,6 @@
+ # See the License for the specific language governing permissions and
+ # limitations under the License.
+ 
+-import tempfile
+ from functools import reduce
+ import unittest
+ import copy
+@@ -42,8 +41,8 @@ def setUpModule():
+     mol.basis = 'sto3g'
+     mol.build()
+     mf = scf.RHF(mol)
+-    mf.chkfile = tempfile.NamedTemporaryFile().name
+     mf.conv_tol_grad = 1e-8
++    mf.chkfile = lib.NamedTemporaryFile().name
+     mf.kernel()
+ 
+     mycc = rccsdtq.RCCSDTQ(mf)
+@@ -123,7 +122,7 @@ class KnownValues(unittest.TestCase):
+         self.assertAlmostEqual(cc1.e_corr, -0.04931187059105583, 7)
+ 
+     def test_restart(self):
+-        ftmp = tempfile.NamedTemporaryFile()
++        ftmp = lib.NamedTemporaryFile()
+         cc1 = cc.RCCSDTQ(mf)
+         cc1.max_cycle = 5
+         cc1.kernel()
+diff --git a/pyscf/cc/test/test_rccsdtq_highm.py b/pyscf/cc/test/test_rccsdtq_highm.py
+index 5761f5c69..2d8cbcc7b 100644
+--- a/pyscf/cc/test/test_rccsdtq_highm.py
++++ b/pyscf/cc/test/test_rccsdtq_highm.py
+@@ -13,7 +13,6 @@
+ # See the License for the specific language governing permissions and
+ # limitations under the License.
+ 
+-import tempfile
+ from functools import reduce
+ import unittest
+ import copy
+@@ -42,8 +41,8 @@ def setUpModule():
+     mol.basis = 'sto3g'
+     mol.build()
+     mf = scf.RHF(mol)
+-    mf.chkfile = tempfile.NamedTemporaryFile().name
+     mf.conv_tol_grad = 1e-8
++    mf.chkfile = lib.NamedTemporaryFile().name
+     mf.kernel()
+ 
+     mycc = rccsdtq_highm.RCCSDTQ(mf)
+@@ -91,7 +90,7 @@ class KnownValues(unittest.TestCase):
+         self.assertAlmostEqual(cc1.e_corr, -0.04931187059105583, 7)
+ 
+     def test_restart(self):
+-        ftmp = tempfile.NamedTemporaryFile()
++        ftmp = lib.NamedTemporaryFile()
+         cc1 = cc.RCCSDTQ(mf, compact_tamps=False)
+         cc1.max_cycle = 5
+         cc1.kernel()
+diff --git a/pyscf/cc/test/test_uccsdt.py b/pyscf/cc/test/test_uccsdt.py
+index f68bc63fd..6b745e8f9 100644
+--- a/pyscf/cc/test/test_uccsdt.py
++++ b/pyscf/cc/test/test_uccsdt.py
+@@ -13,7 +13,6 @@
+ # See the License for the specific language governing permissions and
+ # limitations under the License.
+ 
+-import tempfile
+ import unittest
+ import copy
+ import numpy
+@@ -185,7 +184,7 @@ class KnownValues(unittest.TestCase):
+         self.assertAlmostEqual(mycc.e_tot, -75.83479685448731, 8)
+ 
+     def test_restart_s0(self):
+-        ftmp = tempfile.NamedTemporaryFile()
++        ftmp = lib.NamedTemporaryFile()
+         cc1 = cc.UCCSDT(mf)
+         cc1.max_cycle = 5
+         cc1.kernel()
+@@ -233,7 +232,7 @@ class KnownValues(unittest.TestCase):
+         self.assertAlmostEqual(abs(cc1.t3[3] - cc2.t3[3]).max(), 0, 9)
+ 
+     def test_restart_s2(self):
+-        ftmp = tempfile.NamedTemporaryFile()
++        ftmp = lib.NamedTemporaryFile()
+         cc1 = cc.UCCSDT(mf_s2)
+         cc1.max_cycle = 5
+         cc1.kernel()
+@@ -281,7 +280,7 @@ class KnownValues(unittest.TestCase):
+         self.assertAlmostEqual(abs(cc1.t3[3] - cc2.t3[3]).max(), 0, 9)
+ 
+     def test_restart_s2_not_do_diis_max_t(self):
+-        ftmp = tempfile.NamedTemporaryFile()
++        ftmp = lib.NamedTemporaryFile()
+         cc1 = cc.UCCSDT(mf_s2)
+         cc1.max_cycle = 5
+         cc1.do_diis_max_t = False
+diff --git a/pyscf/cc/test/test_uccsdt_highm.py b/pyscf/cc/test/test_uccsdt_highm.py
+index 839963851..fbb2fde95 100644
+--- a/pyscf/cc/test/test_uccsdt_highm.py
++++ b/pyscf/cc/test/test_uccsdt_highm.py
+@@ -13,7 +13,6 @@
+ # See the License for the specific language governing permissions and
+ # limitations under the License.
+ 
+-import tempfile
+ import unittest
+ import copy
+ import numpy
+@@ -85,7 +84,7 @@ class KnownValues(unittest.TestCase):
+         self.assertAlmostEqual(mycc.e_tot, -75.83479685448731, 8)
+ 
+     def test_restart_s0(self):
+-        ftmp = tempfile.NamedTemporaryFile()
++        ftmp = lib.NamedTemporaryFile()
+         cc1 = cc.UCCSDT(mf, compact_tamps=False)
+         cc1.max_cycle = 5
+         cc1.kernel()
+@@ -141,7 +140,7 @@ class KnownValues(unittest.TestCase):
+         self.assertAlmostEqual(abs(cc1.t3[3] - cc2.t3[3]).max(), 0, 9)
+ 
+     def test_restart_s2(self):
+-        ftmp = tempfile.NamedTemporaryFile()
++        ftmp = lib.NamedTemporaryFile()
+         cc1 = cc.UCCSDT(mf_s2, compact_tamps=False)
+         cc1.max_cycle = 5
+         cc1.kernel()
+@@ -189,7 +188,7 @@ class KnownValues(unittest.TestCase):
+         self.assertAlmostEqual(abs(cc1.t3[3] - cc2.t3[3]).max(), 0, 9)
+ 
+     def test_restart_s2_not_do_diis_max_t(self):
+-        ftmp = tempfile.NamedTemporaryFile()
++        ftmp = lib.NamedTemporaryFile()
+         cc1 = cc.UCCSDT(mf_s2, compact_tamps=False)
+         cc1.max_cycle = 5
+         cc1.do_diis_max_t = False
+diff --git a/pyscf/cc/uintermediates_slow.py b/pyscf/cc/uintermediates_slow.py
+index 4b7c949f0..977bc004f 100644
+--- a/pyscf/cc/uintermediates_slow.py
++++ b/pyscf/cc/uintermediates_slow.py
+@@ -13,7 +13,6 @@
+ # See the License for the specific language governing permissions and
+ # limitations under the License.
+ 
+-import tempfile
+ import h5py
+ import numpy as np
+ from pyscf import lib
+@@ -73,7 +72,7 @@ def cc_Wvvvv(t1,t2,eris):
+     #Wabef += 0.25*einsum('mnab,mnef->abef',tau,eris.oovv)
+     if t1.dtype == np.complex128: ds_type = 'c16'
+     else: ds_type = 'f8'
+-    _tmpfile1 = tempfile.NamedTemporaryFile(dir=lib.param.TMPDIR)
++    _tmpfile1 = lib.NamedTemporaryFile(dir=lib.param.TMPDIR)
+     fimd = h5py.File(_tmpfile1.name)
+     nocc, nvir = t1.shape
+     Wabef = fimd.create_dataset('vvvv', (nvir,nvir,nvir,nvir), ds_type)
+@@ -120,7 +119,7 @@ def Wvvvv(t1,t2,eris):
+     #Wabef = cc_Wvvvv(t1,t2,eris) + 0.25*einsum('mnab,mnef->abef',tau,eris.oovv)
+     if t1.dtype == np.complex128: ds_type = 'c16'
+     else: ds_type = 'f8'
+-    _tmpfile1 = tempfile.NamedTemporaryFile(dir=lib.param.TMPDIR)
++    _tmpfile1 = lib.NamedTemporaryFile(dir=lib.param.TMPDIR)
+     fimd = h5py.File(_tmpfile1.name)
+     nocc, nvir = t1.shape
+     Wabef = fimd.create_dataset('vvvv', (nvir,nvir,nvir,nvir), ds_type)
+diff --git a/pyscf/ci/test/test_cisd.py b/pyscf/ci/test/test_cisd.py
+index 20f0cac12..32eb4ac4d 100644
+--- a/pyscf/ci/test/test_cisd.py
++++ b/pyscf/ci/test/test_cisd.py
+@@ -14,7 +14,6 @@
+ # limitations under the License.
+ 
+ import unittest
+-import tempfile
+ import numpy
+ from functools import reduce
+ 
+@@ -332,7 +331,7 @@ class KnownValues(unittest.TestCase):
+         H   0.   -0.757   0.587
+         H   0.   0.757    0.587''', basis='631g')
+         mf = scf.RHF(mol).run()
+-        mf.chkfile = tempfile.NamedTemporaryFile().name
++        mf.chkfile = lib.NamedTemporaryFile().name
+         ci_scanner = ci.CISD(mf).as_scanner()
+         ci_scanner(mol)
+         ci_scanner.nmo = mf.mo_energy.size
+diff --git a/pyscf/df/df.py b/pyscf/df/df.py
+index 987521e04..47c37775a 100644
+--- a/pyscf/df/df.py
++++ b/pyscf/df/df.py
+@@ -21,7 +21,6 @@ J-metric density fitting
+ '''
+ 
+ 
+-import tempfile
+ import contextlib
+ import numpy
+ import h5py
+@@ -171,7 +170,7 @@ class DF(lib.StreamObject):
+                                               max_memory=max_memory, verbose=log)
+         else:
+             if self._cderi_to_save is None:
+-                self._cderi_to_save = tempfile.NamedTemporaryFile(dir=lib.param.TMPDIR)
++                self._cderi_to_save = lib.NamedTemporaryFile(dir=lib.param.TMPDIR)
+             cderi = self._cderi_to_save
+ 
+             if is_custom_storage:
+diff --git a/pyscf/df/outcore.py b/pyscf/df/outcore.py
+index e59bf464f..033752ccf 100644
+--- a/pyscf/df/outcore.py
++++ b/pyscf/df/outcore.py
+@@ -17,7 +17,6 @@
+ #
+ 
+ 
+-import tempfile
+ import numpy
+ import scipy.linalg
+ import h5py
+@@ -57,7 +56,7 @@ def cholesky_eri(mol, erifile, auxbasis='weigend+etb', dataname='j3c', tmpdir=No
+ 
+     if tmpdir is None:
+         tmpdir = lib.param.TMPDIR
+-    swapfile = tempfile.NamedTemporaryFile(dir=tmpdir)
++    swapfile = lib.NamedTemporaryFile(dir=tmpdir)
+     cholesky_eri_b(mol, swapfile.name, auxbasis, dataname,
+                    int3c, aosym, int2c, comp, max_memory, auxmol, verbose=log)
+     fswap = h5py.File(swapfile.name, 'r')
+@@ -243,7 +242,7 @@ def general(mol, mo_coeffs, erifile, auxbasis='weigend+etb', dataname='eri_mo',
+ 
+     if tmpdir is None:
+         tmpdir = lib.param.TMPDIR
+-    swapfile = tempfile.NamedTemporaryFile(dir=tmpdir)
++    swapfile = lib.NamedTemporaryFile(dir=tmpdir)
+     cholesky_eri_b(mol, swapfile.name, auxbasis, dataname,
+                    int3c, aosym, int2c, comp, max_memory, verbose=log)
+     fswap = h5py.File(swapfile.name, 'r')
+diff --git a/pyscf/df/test/test_addons.py b/pyscf/df/test/test_addons.py
+index 1a62a905a..00918e232 100644
+--- a/pyscf/df/test/test_addons.py
++++ b/pyscf/df/test/test_addons.py
+@@ -17,7 +17,6 @@
+ 
+ import unittest
+ import itertools
+-import tempfile
+ import numpy as np
+ from pyscf import lib
+ from pyscf import gto
+diff --git a/pyscf/df/test/test_df.py b/pyscf/df/test/test_df.py
+index 11b07b91b..a386b02e9 100644
+--- a/pyscf/df/test/test_df.py
++++ b/pyscf/df/test/test_df.py
+@@ -17,7 +17,6 @@
+ 
+ import os
+ import unittest
+-import tempfile
+ import numpy
+ from pyscf import lib
+ from pyscf import gto
+@@ -73,7 +72,7 @@ class KnownValues(unittest.TestCase):
+ 
+     def test_cderi_to_save(self):
+         with open(os.devnull, 'w') as f:
+-            ftmp = tempfile.NamedTemporaryFile()
++            ftmp = lib.NamedTemporaryFile()
+             dfobj = df.DF(mol)
+             dfobj.auxmol = df.addons.make_auxmol(mol, 'weigend')
+             dfobj.verbose = 5
+@@ -132,7 +131,7 @@ class KnownValues(unittest.TestCase):
+         mol = gto.M(atom = 'H 0 0 0; F 0 0 1.1', basis='ccpvdz', max_memory=10, verbose=0)
+         mf = mol.RKS().density_fit()
+         mf.xc = 'lda+0.5*SR_HF(0.3)'
+-        with tempfile.NamedTemporaryFile() as ftmp:
++        with lib.NamedTemporaryFile() as ftmp:
+             mf.with_df._cderi_to_save = ftmp.name
+             mf.run()
+         self.assertAlmostEqual(mf.e_tot, -103.4965622991, 6)
+diff --git a/pyscf/df/test/test_df_grad.py b/pyscf/df/test/test_df_grad.py
+index 80d39fe06..a892d7722 100644
+--- a/pyscf/df/test/test_df_grad.py
++++ b/pyscf/df/test/test_df_grad.py
+@@ -17,7 +17,6 @@
+ 
+ import os
+ import unittest
+-import tempfile
+ import numpy
+ from pyscf import lib
+ from pyscf import gto
+diff --git a/pyscf/df/test/test_df_hessian.py b/pyscf/df/test/test_df_hessian.py
+index 078b967aa..e22e79fd0 100644
+--- a/pyscf/df/test/test_df_hessian.py
++++ b/pyscf/df/test/test_df_hessian.py
+@@ -17,7 +17,6 @@
+ 
+ import os
+ import unittest
+-import tempfile
+ import numpy
+ from pyscf import lib
+ from pyscf import gto
+diff --git a/pyscf/df/test/test_outcore.py b/pyscf/df/test/test_outcore.py
+index 2e498267d..910124e8d 100644
+--- a/pyscf/df/test/test_outcore.py
++++ b/pyscf/df/test/test_outcore.py
+@@ -16,7 +16,6 @@
+ #
+ 
+ import unittest
+-import tempfile
+ import numpy
+ import scipy.linalg
+ import h5py
+@@ -47,7 +46,7 @@ def tearDownModule():
+ 
+ class KnownValues(unittest.TestCase):
+     def test_outcore(self):
+-        ftmp = tempfile.NamedTemporaryFile(dir=lib.param.TMPDIR)
++        ftmp = lib.NamedTemporaryFile(dir=lib.param.TMPDIR)
+         cderi0 = df.incore.cholesky_eri(mol)
+         df.outcore.cholesky_eri(mol, ftmp.name)
+         with h5py.File(ftmp.name, 'r') as feri:
+@@ -73,7 +72,7 @@ class KnownValues(unittest.TestCase):
+         with h5py.File(ftmp.name, 'r') as feri:
+             self.assertTrue(numpy.allclose(feri['j3c'], cderi0.reshape(naux,-1)))
+ 
+-        ftmp = tempfile.NamedTemporaryFile(dir=lib.param.TMPDIR)
++        ftmp = lib.NamedTemporaryFile(dir=lib.param.TMPDIR)
+         numpy.random.seed(1)
+         co = numpy.random.random((nao,4))
+         cv = numpy.random.random((nao,25))
+@@ -96,7 +95,7 @@ class KnownValues(unittest.TestCase):
+             self.assertTrue(numpy.allclose(feri['eri_mo'], cderi0))
+ 
+     def test_lindep(self):
+-        ftmp = tempfile.NamedTemporaryFile(dir=lib.param.TMPDIR)
++        ftmp = lib.NamedTemporaryFile(dir=lib.param.TMPDIR)
+         df.outcore.cholesky_eri(mol, ftmp.name, auxmol=auxmol, verbose=7)
+         with h5py.File(ftmp.name, 'r') as f:
+             cderi0 = f['j3c'][:]
+@@ -111,7 +110,7 @@ class KnownValues(unittest.TestCase):
+         self.assertAlmostEqual(abs(eri0-eri1).max(), 0, 9)
+ 
+ #    def test_int3c2e_ip(self):
+-#        ftmp = tempfile.NamedTemporaryFile(dir=lib.param.TMPDIR)
++#        ftmp = lib.NamedTemporaryFile(dir=lib.param.TMPDIR)
+ #        df.outcore.cholesky_eri(mol, ftmp.name, int3c='int3c2e_ip1',
+ #                                auxmol=auxmol, comp=3)
+ #        with h5py.File(ftmp.name, 'r') as f:
+diff --git a/pyscf/dft/test/test_he.py b/pyscf/dft/test/test_he.py
+index 00400d0f1..67ce66dbc 100644
+--- a/pyscf/dft/test/test_he.py
++++ b/pyscf/dft/test/test_he.py
+@@ -14,7 +14,6 @@
+ # limitations under the License.
+ 
+ import unittest
+-import tempfile
+ import numpy
+ from pyscf import gto
+ from pyscf import lib
+@@ -215,14 +214,14 @@ class KnownValues(unittest.TestCase):
+ 
+     # issue 1986
+     def test_init_guess_chkfile(self):
+-        with tempfile.NamedTemporaryFile() as tmpf:
+-            mol = gto.M(atom='He 0 0 0', basis='631g', charge=1, spin=1)
++        mol = gto.M(atom='He 0 0 0', basis='631g', charge=1, spin=1)
++        with lib.NamedTemporaryFile() as tmpf:
+             mf = dft.RKS(mol)
+             mf.chkfile = tmpf.name
+             e1 = mf.kernel()
+             mf = dft.RKS(mol)
+-            mf.init_guess = 'chkfile'
+             mf.chkfile = tmpf.name
++            mf.init_guess = 'chkfile'
+             mf.max_cycle = 1
+             e2 = mf.kernel()
+             self.assertAlmostEqual(e1, e2, 9)
+diff --git a/pyscf/eph/test/test_rhf.py b/pyscf/eph/test/test_rhf.py
+index 3c72e92cf..5ac5aba9b 100644
+--- a/pyscf/eph/test/test_rhf.py
++++ b/pyscf/eph/test/test_rhf.py
+@@ -14,7 +14,6 @@
+ # limitations under the License.
+ #
+ 
+-import tempfile
+ from pyscf import scf, gto, lib
+ from pyscf.eph import eph_fd, rhf
+ import numpy as np
+@@ -33,7 +32,6 @@ def setUpModule():
+     mol.output = '/dev/null'
+     mol.build()
+     mf = scf.RHF(mol)
+-    mf.chkfile = tempfile.NamedTemporaryFile().name
+     mf.conv_tol = 1e-14
+     mf.conv_tol_grad = 1e-9
+     mf.kernel()
+diff --git a/pyscf/eph/test/test_rks.py b/pyscf/eph/test/test_rks.py
+index 4383b89d4..3fd9cd4d3 100644
+--- a/pyscf/eph/test/test_rks.py
++++ b/pyscf/eph/test/test_rks.py
+@@ -14,7 +14,6 @@
+ # limitations under the License.
+ #
+ 
+-import tempfile
+ from pyscf import dft, gto, lib
+ from pyscf.eph import eph_fd, rks
+ import numpy as np
+@@ -33,7 +32,6 @@ def setUpModule():
+     mol.output = '/dev/null'
+     mol.build()
+     mf = dft.RKS(mol)
+-    mf.chkfile = tempfile.NamedTemporaryFile().name
+     mf.grids.level = 3
+     mf.xc = 'b3lyp5'
+     mf.conv_tol = 1e-14
+diff --git a/pyscf/eph/test/test_uhf.py b/pyscf/eph/test/test_uhf.py
+index ac20518f8..3508afb2e 100644
+--- a/pyscf/eph/test/test_uhf.py
++++ b/pyscf/eph/test/test_uhf.py
+@@ -14,7 +14,6 @@
+ # limitations under the License.
+ #
+ 
+-import tempfile
+ from pyscf import scf, gto, lib
+ from pyscf.eph import eph_fd, uhf
+ import numpy as np
+@@ -33,7 +32,6 @@ def setUpModule():
+     mol.output = '/dev/null'
+     mol.build()
+     mf = scf.UHF(mol)
+-    mf.chkfile = tempfile.NamedTemporaryFile().name
+     mf.conv_tol = 1e-14
+     mf.conv_tol_grad = 1e-9
+     mf.kernel()
+diff --git a/pyscf/eph/test/test_uks.py b/pyscf/eph/test/test_uks.py
+index 0cdba7044..2308ce88e 100644
+--- a/pyscf/eph/test/test_uks.py
++++ b/pyscf/eph/test/test_uks.py
+@@ -14,7 +14,6 @@
+ # limitations under the License.
+ #
+ 
+-import tempfile
+ from pyscf import dft, gto, lib
+ from pyscf.eph import eph_fd, uks
+ import numpy as np
+@@ -34,7 +33,6 @@ def setUpModule():
+     mol.build()
+ 
+     mf = dft.UKS(mol)
+-    mf.chkfile = tempfile.NamedTemporaryFile().name
+     mf.grids.level = 3
+     mf.xc = 'b3lyp5'
+     mf.conv_tol = 1e-14
+diff --git a/pyscf/gto/test/test_basis_parser.py b/pyscf/gto/test/test_basis_parser.py
+index 1d6cbbf3b..2fb79bd13 100644
+--- a/pyscf/gto/test/test_basis_parser.py
++++ b/pyscf/gto/test/test_basis_parser.py
+@@ -14,7 +14,6 @@
+ # limitations under the License.
+ 
+ import unittest
+-import tempfile
+ from functools import reduce
+ import numpy
+ from pyscf import gto
+@@ -61,7 +60,7 @@ class KnownValues(unittest.TestCase):
+         self.assertEqual(len(gto.basis.load('def2-svp', 'Rn')), 16)
+ 
+     def test_basis_load_from_file(self):
+-        ftmp = tempfile.NamedTemporaryFile()
++        ftmp = lib.NamedTemporaryFile()
+         ftmp.write('''
+ Li    S
+      16.1195750              0.15432897
+@@ -401,7 +400,7 @@ F   1   1.00
+         self.assertEqual(ref, basis1)
+ 
+     def test_parse_gaussian_load_basis(self):
+-        with tempfile.NamedTemporaryFile(mode='w+') as f:
++        with lib.NamedTemporaryFile(mode='w+') as f:
+             f.write('''
+ ****
+ H 0
+@@ -412,7 +411,7 @@ S 1 1.0
+             f.flush()
+             self.assertEqual(parse_gaussian.load(f.name, 'H'), [[0, [1., 1.]]])
+ 
+-        with tempfile.NamedTemporaryFile(mode='w+') as f:
++        with lib.NamedTemporaryFile(mode='w+') as f:
+             f.write('''
+ H 0
+ S 1 1.0
+@@ -422,7 +421,7 @@ S 1 1.0
+             f.flush()
+             self.assertEqual(parse_gaussian.load(f.name, 'H'), [[0, [1., 1.]]])
+ 
+-        with tempfile.NamedTemporaryFile(mode='w+') as f:
++        with lib.NamedTemporaryFile(mode='w+') as f:
+             f.write('''
+ ****
+ H 0
+@@ -432,7 +431,7 @@ S 1 1.0
+             f.flush()
+             self.assertEqual(parse_gaussian.load(f.name, 'H'), [[0, [1., 1.]]])
+ 
+-        with tempfile.NamedTemporaryFile(mode='w+') as f:
++        with lib.NamedTemporaryFile(mode='w+') as f:
+             f.write('''
+ H 0
+ S 1 1.0
+diff --git a/pyscf/gto/test/test_mole.py b/pyscf/gto/test/test_mole.py
+index a2f7aa6af..fc7577d3d 100644
+--- a/pyscf/gto/test/test_mole.py
++++ b/pyscf/gto/test/test_mole.py
+@@ -14,7 +14,6 @@
+ # limitations under the License.
+ 
+ import unittest
+-import tempfile
+ from functools import reduce
+ import numpy
+ import numpy as np
+@@ -44,7 +43,7 @@ def setUpModule():
+     mol0.spin = 1
+     mol0.verbose = 7
+     mol0.ecp = {'O1': 'lanl2dz'}
+-    ftmp = tempfile.NamedTemporaryFile()
++    ftmp = lib.NamedTemporaryFile()
+     mol0.output = ftmp.name
+     mol0.build()
+ 
+@@ -257,7 +256,7 @@ C    SP
+         self.assertEqual(mol1.natm, 1)
+ 
+     def test_atom_as_file(self):
+-        ftmp = tempfile.NamedTemporaryFile('w')
++        ftmp = lib.NamedTemporaryFile('w')
+         # file in raw format
+         ftmp.write('He 0 0 0\nHe 0 0 1\n')
+         ftmp.flush()
+@@ -265,14 +264,14 @@ C    SP
+         self.assertEqual(mol1.natm, 2)
+ 
+         # file in xyz format
+-        ftmp = tempfile.NamedTemporaryFile('w', suffix='.xyz')
++        ftmp = lib.NamedTemporaryFile('w', suffix='.xyz')
+         ftmp.write('2\n\nHe 0 0 0\nHe 0 0 1\n')
+         ftmp.flush()
+         mol1 = gto.M(atom=ftmp.name)
+         self.assertEqual(mol1.natm, 2)
+ 
+         # file in zmatrix format
+-        ftmp = tempfile.NamedTemporaryFile('w', suffix='.zmat')
++        ftmp = lib.NamedTemporaryFile('w', suffix='.zmat')
+         ftmp.write('He\nHe 1 1.5\n')
+         ftmp.flush()
+         mol1 = gto.M(atom=ftmp.name)
+@@ -621,7 +620,7 @@ O    SP
+ 
+     def test_dump_loads_skip(self):
+         import json
+-        with tempfile.NamedTemporaryFile() as tmpfile:
++        with lib.NamedTemporaryFile() as tmpfile:
+             lib.chkfile.save_mol(mol0, tmpfile.name)
+             mol1 = gto.Mole()
+             mol1.update(tmpfile.name)
+@@ -975,7 +974,7 @@ O    SP
+         self.assertAlmostEqual(eri[0,0], 1.0557129427350722, 12)
+ 
+     def test_tofile(self):
+-        tmpfile = tempfile.NamedTemporaryFile()
++        tmpfile = lib.NamedTemporaryFile()
+         mol = gto.M(atom=[[1  , (0.,1.,1.)],
+                           ["O1", (0.,0.,0.)],
+                           [1  , (1.,1.,0.)], ])
+@@ -990,7 +989,7 @@ H           1.00000000        1.00000000        0.00000000
+             self.assertEqual(f.read(), ref)
+         self.assertEqual(out1, ref[:-1])
+ 
+-        tmpfile = tempfile.NamedTemporaryFile(suffix='.zmat')
++        tmpfile = lib.NamedTemporaryFile(suffix='.zmat')
+         str1 = mol.tofile(tmpfile.name, format='zmat')
+         #FIXME:self.assertEqual(mol._atom, mol.fromfile(tmpfile.name))
+ 
+@@ -1020,7 +1019,7 @@ H           1.00000000        1.00000000        0.00000000
+         print(mol.unit == 'Angstrom')
+ 
+     def test_fromfile(self):
+-        with tempfile.NamedTemporaryFile(mode='w+', suffix='.xyz') as f:
++        with lib.NamedTemporaryFile(mode='w+', suffix='.xyz') as f:
+             f.write('2\n\nH 0 0 1; H 0 -1 0')
+             f.flush()
+             mol = gto.Mole()
+diff --git a/pyscf/lib/misc.py b/pyscf/lib/misc.py
+index 746e8583e..f1dfb34a8 100644
+--- a/pyscf/lib/misc.py
++++ b/pyscf/lib/misc.py
+@@ -22,6 +22,7 @@ Some helper functions
+ 
+ import os
+ import sys
++import atexit
+ import time
+ import random
+ import platform
+@@ -492,7 +493,7 @@ class capture_stdout:
+         self._contents = None
+         self.old_stdout_fileno = sys.stdout.fileno()
+         self.bak_stdout_fd = os.dup(self.old_stdout_fileno)
+-        self.ftmp = tempfile.NamedTemporaryFile(dir=param.TMPDIR)
++        self.ftmp = NamedTemporaryFile(dir=param.TMPDIR)
+         os.dup2(self.ftmp.file.fileno(), self.old_stdout_fileno)
+         return self
+     def __exit__(self, type, value, traceback):
+@@ -1257,6 +1258,37 @@ class H5TmpFile(H5FileWrap):
+         self.close()
+ 
+ 
++def _cleanup_tmpfiles():
++    for name in _to_delete:
++        try:
++            os.unlink(name)
++        except OSError:
++            pass
++
++_to_delete = set()
++atexit.register(_cleanup_tmpfiles)
++
++
++def NamedTemporaryFile(*args, **kwargs):
++    '''Create a named temporary file object. This function wraps
++    `tempfile.NamedTemporaryFile`. On Windows, `delete=False` is forced
++    to prevent permission errors when the file is reopened by another
++    handle.
++
++    Examples:
++
++    >>> from pyscf import lib
++    >>> ftmp = lib.NamedTemporaryFile()
++    >>> ftmp.name
++    '''
++    if sys.platform == 'win32':
++        kwargs['delete'] = False
++    f = tempfile.NamedTemporaryFile(*args, **kwargs)
++    if sys.platform == 'win32':
++        _to_delete.add(f.name)
++    return f
++
++
+ def fingerprint(a):
+     '''Fingerprint of numpy array'''
+     a = numpy.asarray(a)
+diff --git a/pyscf/lib/test/test_chkfile.py b/pyscf/lib/test/test_chkfile.py
+index 06101f3e4..fe136177f 100644
+--- a/pyscf/lib/test/test_chkfile.py
++++ b/pyscf/lib/test/test_chkfile.py
+@@ -15,14 +15,13 @@
+ 
+ import unittest
+ import numpy
+-import tempfile
+ from pyscf import lib, gto
+ 
+ class KnownValues(unittest.TestCase):
+     def test_save_load_mol(self):
+         mol = gto.M(atom=[['H', (0,0,i)] for i in range(8)],
+                     basis='sto3g')
+-        fchk = tempfile.NamedTemporaryFile()
++        fchk = lib.NamedTemporaryFile()
+         lib.chkfile.save_mol(mol, fchk.name)
+         mol1 = lib.chkfile.load_mol(fchk.name)
+         self.assertTrue(numpy.all(mol1._atm == mol._atm))
+@@ -30,7 +29,7 @@ class KnownValues(unittest.TestCase):
+         self.assertTrue(numpy.all(mol1._env == mol._env))
+ 
+     def test_save_load_arrays(self):
+-        fchk = tempfile.NamedTemporaryFile()
++        fchk = lib.NamedTemporaryFile()
+         a = numpy.eye(3)
+         lib.chkfile.save(fchk.name, 'a', a)
+         self.assertTrue(numpy.all(a == lib.chkfile.load(fchk.name, 'a')))
+diff --git a/pyscf/lib/test/test_diis.py b/pyscf/lib/test/test_diis.py
+index c568e84b6..0abce1377 100644
+--- a/pyscf/lib/test/test_diis.py
++++ b/pyscf/lib/test/test_diis.py
+@@ -15,7 +15,6 @@
+ 
+ import unittest
+ import numpy
+-import tempfile
+ from pyscf import lib, gto
+ 
+ def make_ab(n):
+@@ -51,7 +50,7 @@ class KnownValues(unittest.TestCase):
+     def test_restore(self):
+         a, b, adiag, arest, x = make_ab(16)
+         lib.diis.INCORE_SIZE, bak = 4, lib.diis.INCORE_SIZE
+-        ftmp = tempfile.NamedTemporaryFile()
++        ftmp = lib.NamedTemporaryFile()
+         ad = lib.diis.DIIS(filename=ftmp.name)
+         for i in range(8):
+             x = (b - arest.dot(x)) / adiag
+diff --git a/pyscf/mcpdft/test/test_lpdft.py b/pyscf/mcpdft/test/test_lpdft.py
+index 71be3fb34..655d9c897 100644
+--- a/pyscf/mcpdft/test/test_lpdft.py
++++ b/pyscf/mcpdft/test/test_lpdft.py
+@@ -15,7 +15,7 @@
+ #
+ # Author: Matthew Hennefarth <mhennefarth@uchicago.com>
+ 
+-import tempfile, h5py
++import h5py
+ import numpy as np
+ from pyscf import gto, scf, dft, fci, lib
+ from pyscf import mcpdft
+@@ -57,9 +57,9 @@ def get_water(functional='tpbe', basis='6-31g'):
+     solver2.spin = 2
+ 
+     mc = mcpdft.CASSCF(mf, functional, 4, 4, grids_level=1)
+-    mc.chkfile = tempfile.NamedTemporaryFile().name 
+     # mc.chk_ci = True
+     mc = mc.multi_state_mix([solver1, solver2], weights, "lin")
++    mc.chkfile = lib.NamedTemporaryFile().name
+     mc.run()
+     return mc
+ 
+@@ -82,9 +82,9 @@ def get_water_triplet(functional='tPBE', basis="6-31G"):
+     solver2.nroots = 2
+ 
+     mc = mcpdft.CASSCF(mf, functional, 4, 4, grids_level=1)
+-    mc.chkfile = tempfile.NamedTemporaryFile().name 
+     # mc.chk_ci = True
+     mc = mc.multi_state_mix([solver1, solver2], weights, "lin")
++    mc.chkfile = lib.NamedTemporaryFile().name
+     mc.run()
+     return mc
+ 
+diff --git a/pyscf/mcpdft/test/test_mcpdft.py b/pyscf/mcpdft/test/test_mcpdft.py
+index 1219d3b27..404126f5d 100644
+--- a/pyscf/mcpdft/test/test_mcpdft.py
++++ b/pyscf/mcpdft/test/test_mcpdft.py
+@@ -30,7 +30,7 @@
+ # Some assertAlmostTrue thresholds are loose because we are only
+ # trying to test the API here; we need tight convergence and grids
+ # to reproduce well when OMP is on.
+-import tempfile, h5py
++import h5py
+ import numpy as np
+ from pyscf import gto, scf, mcscf, lib, fci, dft
+ from pyscf import mcpdft
+@@ -52,7 +52,7 @@ def auto_setup(xyz="Li 0 0 0\nH 1.5 0 0", fnal="tPBE"):
+     mcp_ss_nosym = mcpdft.CASSCF(mc_nosym, fnal, 5, 2).run(conv_tol=1e-8)
+     mcp_ss_sym = (
+         mcpdft.CASSCF(mc_sym, fnal, 5, 2)
+-        .set(chkfile=tempfile.NamedTemporaryFile().name)#, chk_ci=True)
++        .set(chkfile=lib.NamedTemporaryFile().name, chk_ci=True)
+         .run(conv_tol=1e-8)
+     )
+     mcp_sa_0 = mcp_ss_nosym.state_average(
+@@ -85,7 +85,7 @@ def auto_setup(xyz="Li 0 0 0\nH 1.5 0 0", fnal="tPBE"):
+             ]
+             * 5,
+         )
+-        .set(ci=None, chkfile=tempfile.NamedTemporaryFile().name)#, chk_ci=True)
++        .set(ci=None, chkfile=lib.NamedTemporaryFile().name, chk_ci=True)
+         .run(conv_tol=1e-8)
+     )
+     mcp = [[mcp_ss_nosym, mcp_ss_sym], [mcp_sa_0, mcp_sa_1, mcp_sa_2]]
+diff --git a/pyscf/mcscf/test/test_h2o.py b/pyscf/mcscf/test/test_h2o.py
+index b91fa0873..f226f05e3 100644
+--- a/pyscf/mcscf/test/test_h2o.py
++++ b/pyscf/mcscf/test/test_h2o.py
+@@ -14,7 +14,6 @@
+ # limitations under the License.
+ 
+ import unittest
+-import tempfile
+ import numpy
+ from pyscf import gto
+ from pyscf import scf
+@@ -200,7 +199,7 @@ class KnownValues(unittest.TestCase):
+             * 4,
+         )
+         mo = mc.sort_mo([4, 5, 6, 10], base=1)
+-        mc.chkfile = tempfile.NamedTemporaryFile().name
++        mc.chkfile = lib.NamedTemporaryFile().name
+         mc.chk_ci = True
+         mc.kernel(mo)
+         self.assertAlmostEqual(mc.e_tot, mc_ref.e_tot, 8)
+diff --git a/pyscf/mcscf/test/test_mc1step.py b/pyscf/mcscf/test/test_mc1step.py
+index a89b8f08c..9cb694ea2 100644
+--- a/pyscf/mcscf/test/test_mc1step.py
++++ b/pyscf/mcscf/test/test_mc1step.py
+@@ -14,7 +14,6 @@
+ # limitations under the License.
+ 
+ import unittest
+-import tempfile
+ import numpy
+ import h5py
+ from pyscf import lib
+@@ -37,7 +36,7 @@ def setUpModule():
+     )
+     m = scf.RHF(mol)
+     m.conv_tol = 1e-10
+-    m.chkfile = tempfile.NamedTemporaryFile().name
++    m.chkfile = lib.NamedTemporaryFile().name
+     m.scf()
+     mc0 = mcscf.CASSCF(m, 4, 4).run()
+ 
+@@ -51,8 +50,8 @@ def setUpModule():
+     symmetry = True
+     )
+     msym = scf.RHF(molsym)
+-    msym.chkfile = tempfile.NamedTemporaryFile().name
+     msym.conv_tol = 1e-10
++    msym.chkfile = lib.NamedTemporaryFile().name
+     msym.scf()
+ 
+ def tearDownModule():
+diff --git a/pyscf/mcscf/test/test_umc1step.py b/pyscf/mcscf/test/test_umc1step.py
+index afbca9248..37d3cded8 100644
+--- a/pyscf/mcscf/test/test_umc1step.py
++++ b/pyscf/mcscf/test/test_umc1step.py
+@@ -14,7 +14,6 @@
+ # limitations under the License.
+ 
+ import unittest
+-import tempfile
+ import numpy
+ from pyscf import lib
+ from pyscf import gto
+@@ -48,8 +47,8 @@ def tearDownModule():
+ 
+ class KnownValues(unittest.TestCase):
+     def test_ucasscf(self):
+-        with tempfile.NamedTemporaryFile() as f:
+-            mc = mcscf.UCASSCF(m, 4, 4)
++        mc = mcscf.UCASSCF(m, 4, 4)
++        with lib.NamedTemporaryFile() as f:
+             mc.chkfile = f.name
+             mc.run()
+         self.assertAlmostEqual(mc.e_tot, -75.7460662487894, 6)
+diff --git a/pyscf/mp/test/test_dfmp2.py b/pyscf/mp/test/test_dfmp2.py
+index 42a693739..66bfdbdf6 100644
+--- a/pyscf/mp/test/test_dfmp2.py
++++ b/pyscf/mp/test/test_dfmp2.py
+@@ -14,7 +14,6 @@
+ # limitations under the License.
+ 
+ import unittest
+-import tempfile
+ from functools import reduce
+ import numpy
+ import numpy as np
+@@ -125,7 +124,7 @@ class KnownValues(unittest.TestCase):
+         self.assertAlmostEqual(mmp.e_corr, mmp1.e_corr, 8)
+ 
+     def test_read_ovL_outcore(self):
+-        ftmp = tempfile.NamedTemporaryFile()
++        ftmp = lib.NamedTemporaryFile()
+ 
+         mmp = mp.dfmp2.DFMP2(mf)
+         eris = mmp.ao2mo(ovL_to_save=ftmp.name)
+diff --git a/pyscf/mp/test/test_dfump2.py b/pyscf/mp/test/test_dfump2.py
+index ada048fdf..3741b2c2c 100644
+--- a/pyscf/mp/test/test_dfump2.py
++++ b/pyscf/mp/test/test_dfump2.py
+@@ -14,7 +14,6 @@
+ # limitations under the License.
+ 
+ import unittest
+-import tempfile
+ from functools import reduce
+ import numpy
+ import numpy as np
+@@ -106,7 +105,7 @@ class KnownValues(unittest.TestCase):
+         self.assertAlmostEqual(mmp.e_corr, mmp1.e_corr, 8)
+ 
+     def test_read_ovL_outcore(self):
+-        ftmp = tempfile.NamedTemporaryFile()
++        ftmp = lib.NamedTemporaryFile()
+ 
+         mmp = mp.dfump2.DFUMP2(mf)
+         eris = mmp.ao2mo(ovL_to_save=ftmp.name)
+diff --git a/pyscf/mrpt/dfnevpt2.py b/pyscf/mrpt/dfnevpt2.py
+index 4a11d64c4..6c1b9a632 100644
+--- a/pyscf/mrpt/dfnevpt2.py
++++ b/pyscf/mrpt/dfnevpt2.py
+@@ -16,7 +16,6 @@
+ # Authors: Bhavnesh Jangid <jangidbhavnesh@uchicago.edu>
+ 
+ import ctypes
+-import tempfile
+ import numpy as np
+ from functools import reduce
+ from pyscf import lib
+@@ -128,7 +127,7 @@ def _dfnevpt2_eris_outcore(mc, mo_coeff, with_df):
+ 
+     # Step-3: from the transfomed (L|pq), build pacv and cvcv
+     tmpdir = lib.param.TMPDIR
+-    cvcvfile = tempfile.NamedTemporaryFile(dir=tmpdir)
++    cvcvfile = lib.NamedTemporaryFile(dir=tmpdir)
+     # Edge cases
+     if ncore * nvir == 0 or ncore * nvir == 0:
+         f5 = lib.H5TmpFile(cvcvfile.name, 'w')
+diff --git a/pyscf/mrpt/nevpt2.py b/pyscf/mrpt/nevpt2.py
+index 39a41d7e6..77d9abde5 100644
+--- a/pyscf/mrpt/nevpt2.py
++++ b/pyscf/mrpt/nevpt2.py
+@@ -19,7 +19,6 @@
+ 
+ import ctypes
+ 
+-import tempfile
+ from functools import reduce
+ import numpy
+ import h5py
+@@ -381,7 +380,7 @@ def Sijrs(mc, eris, verbose=None):
+     ncas = mo_cas.shape[1]
+     nocc = ncore + ncas
+     if eris is None:
+-        erifile = tempfile.NamedTemporaryFile(dir=lib.param.TMPDIR)
++        erifile = lib.NamedTemporaryFile(dir=lib.param.TMPDIR)
+         feri = ao2mo.outcore.general(mc.mol, (mo_core,mo_virt,mo_core,mo_virt),
+                                      erifile.name, verbose=mc.verbose)
+     else:
+@@ -992,7 +991,7 @@ def trans_e1_outcore(mc, mo, max_memory=None, ioblk_size=256, tmpdir=None,
+ 
+     if tmpdir is None:
+         tmpdir = lib.param.TMPDIR
+-    swapfile = tempfile.NamedTemporaryFile(dir=tmpdir)
++    swapfile = lib.NamedTemporaryFile(dir=tmpdir)
+     ao2mo.outcore.half_e1(mol, (mo[:,:nocc],mo[:,ncore:]), swapfile.name,
+                           max_memory=max_memory, ioblk_size=ioblk_size,
+                           verbose=log, compact=False)
+@@ -1016,7 +1015,7 @@ def trans_e1_outcore(mc, mo, max_memory=None, ioblk_size=256, tmpdir=None,
+     time0 = logger.timer(mol, 'halfe1', *time0)
+     time1 = [logger.process_clock(), logger.perf_counter()]
+     ao_loc = numpy.array(mol.ao_loc_nr(), dtype=numpy.int32)
+-    cvcvfile = tempfile.NamedTemporaryFile(dir=tmpdir)
++    cvcvfile = lib.NamedTemporaryFile(dir=tmpdir)
+     with lib.H5TmpFile(cvcvfile.name, 'w') as f5:
+         cvcv = f5.create_dataset('eri_mo', (ncore*nvir,ncore*nvir), 'f8')
+         ppaa, papa, pacv = _trans(mo, ncore, ncas, load_buf, cvcv, ao_loc)[:3]
+diff --git a/pyscf/pbc/df/df.py b/pyscf/pbc/df/df.py
+index d5be40139..3d32ea93a 100644
+--- a/pyscf/pbc/df/df.py
++++ b/pyscf/pbc/df/df.py
+@@ -32,7 +32,6 @@ J. Chem. Phys. 147, 164119 (2017)
+ import os
+ import ctypes
+ import warnings
+-import tempfile
+ import contextlib
+ import itertools
+ import numpy
+@@ -166,7 +165,7 @@ class GDF(lib.StreamObject, aft.AFTDFMixin):
+         self.linear_dep_threshold = LINEAR_DEP_THR
+         self._j_only = False
+ # If _cderi_to_save is specified, the 3C-integral tensor will be saved in this file.
+-        self._cderi_to_save = tempfile.NamedTemporaryFile(dir=lib.param.TMPDIR)
++        self._cderi_to_save = lib.NamedTemporaryFile(dir=lib.param.TMPDIR)
+ # If _cderi is specified, the 3C-integral tensor will be read from this file
+         self._cderi = None
+         self._rsh_df = {}  # Range separated Coulomb DF objects
+diff --git a/pyscf/pbc/df/gdf_builder.py b/pyscf/pbc/df/gdf_builder.py
+index 3f0a20b0c..5e4e32d34 100644
+--- a/pyscf/pbc/df/gdf_builder.py
++++ b/pyscf/pbc/df/gdf_builder.py
+@@ -26,7 +26,6 @@ for regular density fitting and SR-integral density fitting only.
+ 
+ import os
+ import ctypes
+-import tempfile
+ import numpy as np
+ import scipy.linalg
+ from pyscf import gto
+@@ -204,7 +203,7 @@ class _CCGDFBuilder(rsdf_builder._RSGDFBuilder):
+             shls_slice :
+                 Indicate the shell slices in the primitive cell
+         '''
+-        swapfile = tempfile.NamedTemporaryFile(dir=os.path.dirname(cderi_file))
++        swapfile = lib.NamedTemporaryFile(dir=os.path.dirname(cderi_file))
+         fswap = lib.H5TmpFile(swapfile.name)
+         swapfile = None
+ 
+diff --git a/pyscf/pbc/df/mdf.py b/pyscf/pbc/df/mdf.py
+index e8f522130..00e869660 100644
+--- a/pyscf/pbc/df/mdf.py
++++ b/pyscf/pbc/df/mdf.py
+@@ -22,7 +22,6 @@ Ref:
+ J. Chem. Phys. 147, 164119 (2017)
+ '''
+ 
+-import tempfile
+ import numpy as np
+ import h5py
+ import scipy.linalg
+@@ -89,7 +88,7 @@ class MDF(df.GDF):
+         self.linear_dep_threshold = df.LINEAR_DEP_THR
+         self._j_only = False
+ # If _cderi_to_save is specified, the 3C-integral tensor will be saved in this file.
+-        self._cderi_to_save = tempfile.NamedTemporaryFile(dir=lib.param.TMPDIR)
++        self._cderi_to_save = lib.NamedTemporaryFile(dir=lib.param.TMPDIR)
+ # If _cderi is specified, the 3C-integral tensor will be read from this file
+         self._cderi = None
+         self._rsh_df = {}  # Range separated Coulomb DF objects
+diff --git a/pyscf/pbc/df/rsdf.py b/pyscf/pbc/df/rsdf.py
+index a9e7b1310..4f8d979eb 100644
+--- a/pyscf/pbc/df/rsdf.py
++++ b/pyscf/pbc/df/rsdf.py
+@@ -42,7 +42,6 @@ the LR integrals are evaluated in reciprocal space with a plane wave basis.
+ import os
+ import h5py
+ import scipy.linalg
+-import tempfile
+ import numpy as np
+ 
+ from pyscf import lib
+@@ -424,7 +423,7 @@ class _RSGDFBuilder(rsdf_builder._RSGDFBuilder):
+                       kptij_lst=None, j_only=False, dataname='j3c-junk',
+                       shls_slice=None):
+         # Deadlock on NFS if you open an already-opened tmpfile in H5PY
+-        # swapfile = tempfile.NamedTemporaryFile(dir=os.path.dirname(cderi_file))
++        # swapfile = lib.NamedTemporaryFile(dir=os.path.dirname(cderi_file))
+         fswap = lib.H5TmpFile(dir=os.path.dirname(cderi_file), prefix='.outcore_auxe2_swap')
+         # avoid trash files
+         os.unlink(fswap.filename)
+diff --git a/pyscf/pbc/df/test/test_gdf_builder.py b/pyscf/pbc/df/test/test_gdf_builder.py
+index 5f49ef477..aeddf16c9 100644
+--- a/pyscf/pbc/df/test/test_gdf_builder.py
++++ b/pyscf/pbc/df/test/test_gdf_builder.py
+@@ -13,7 +13,6 @@
+ # limitations under the License.
+ 
+ import unittest
+-import tempfile
+ import numpy as np
+ import scipy.linalg
+ from pyscf import lib
+@@ -108,7 +107,7 @@ class KnownValues(unittest.TestCase):
+ 
+     def test_make_j3c_gamma(self):
+         dfbuilder = gdf_builder._CCGDFBuilder(cell, auxcell).build()
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name)
+             v2 = load(tmpf.name, kpts[[0, 0]])
+             self.assertAlmostEqual(lib.fp(v2), 1.5094843470069796, 7)
+@@ -124,7 +123,7 @@ class KnownValues(unittest.TestCase):
+ 
+     def test_make_j3c(self):
+         dfbuilder = gdf_builder._CCGDFBuilder(cell, auxcell, kpts).build()
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name, aosym='s2')
+             v_s2 = []
+             for ki in range(nkpts):
+@@ -148,7 +147,7 @@ class KnownValues(unittest.TestCase):
+ 
+     def test_make_j3c_j_only(self):
+         dfbuilder = gdf_builder._CCGDFBuilder(cell, auxcell, kpts).build()
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name, aosym='s2', j_only=True)
+             v_s2 = []
+             for ki in range(nkpts):
+@@ -170,7 +169,7 @@ class KnownValues(unittest.TestCase):
+                       dimension=2)
+         auxcell = df.make_auxcell(cell, auxbasis)
+         dfbuilder = gdf_builder._CCGDFBuilder(cell, auxcell).build()
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name)
+             v2 = load(tmpf.name, kpts[[0, 0]])
+             self.assertAlmostEqual(lib.fp(v2.T.dot(v2)), 0.3289627476345819, 8)
+@@ -183,7 +182,7 @@ class KnownValues(unittest.TestCase):
+                       dimension=1)
+         auxcell = df.make_auxcell(cell, auxbasis)
+         dfbuilder = gdf_builder._CCGDFBuilder(cell, auxcell).build()
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name)
+             v2 = load(tmpf.name, kpts[[0, 0]])
+             self.assertAlmostEqual(lib.fp(v2), 1.7171975296579753, 6)
+@@ -197,7 +196,7 @@ class KnownValues(unittest.TestCase):
+         auxcell = df.make_auxcell(cell, auxbasis)
+         dfbuilder = gdf_builder._CCGDFBuilder(cell, auxcell).build()
+         ref = cholesky_eri(cell, auxmol=auxcell)
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name)
+             v2 = load(tmpf.name, kpts[[0, 0]])
+             self.assertAlmostEqual(abs(v2 - ref).max(), 0, 9)
+@@ -278,7 +277,7 @@ class KnownValues(unittest.TestCase):
+         j3c = lib.dot(auxG.conj()*wcoulG, aopair.reshape(ngrids,-1))
+         j2c = scipy.linalg.cholesky(j2c[0], lower=True)
+         ref = scipy.linalg.solve_triangular(j2c, j3c, lower=True)
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name, aosym='s2', j_only=True)
+             v1 = load(tmpf.name, kpts[[0, 0]])
+             self.assertAlmostEqual(abs(ref - v1).max(), 0, 7)
+@@ -304,7 +303,7 @@ class KnownValues(unittest.TestCase):
+ 
+     def test_make_j3c_gamma_lr(self):
+         dfbuilder = gdf_builder._CCGDFBuilder(cell_lr, auxcell_lr).build()
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name)
+             v2 = load(tmpf.name, kpts[[0, 0]])
+             self.assertAlmostEqual(lib.fp(v2), 1.0942903795950072, 7)
+@@ -320,7 +319,7 @@ class KnownValues(unittest.TestCase):
+ 
+     def test_make_j3c_lr(self):
+         dfbuilder = gdf_builder._CCGDFBuilder(cell_lr, auxcell_lr, kpts).build()
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name, aosym='s2')
+             v_s2 = []
+             for ki in range(nkpts):
+@@ -343,7 +342,7 @@ class KnownValues(unittest.TestCase):
+ 
+     def test_make_j3c_j_only_lr(self):
+         dfbuilder = gdf_builder._CCGDFBuilder(cell_lr, auxcell_lr, kpts).build()
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name, aosym='s2', j_only=True)
+             v_s2 = []
+             for ki in range(nkpts):
+@@ -392,7 +391,7 @@ class KnownValues(unittest.TestCase):
+         j3c = lib.dot(auxG.conj()*wcoulG, aopair.reshape(ngrids,-1))
+         j2c = scipy.linalg.cholesky(j2c[0], lower=True)
+         ref = scipy.linalg.solve_triangular(j2c, j3c, lower=True)
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name, aosym='s2', j_only=True)
+             v1 = load(tmpf.name, kpts[[0, 0]])
+             self.assertAlmostEqual(abs(ref - v1).max(), 0, 7)
+@@ -418,7 +417,7 @@ class KnownValues(unittest.TestCase):
+ 
+     def test_make_j3c_gamma_sr(self):
+         dfbuilder = gdf_builder._CCGDFBuilder(cell_sr, auxcell_sr).build()
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name)
+             v2 = load(tmpf.name, kpts[[0, 0]])
+             self.assertAlmostEqual(lib.fp(v2), 0.9647178630555139, 7)
+@@ -434,7 +433,7 @@ class KnownValues(unittest.TestCase):
+ 
+     def test_make_j3c_sr(self):
+         dfbuilder = gdf_builder._CCGDFBuilder(cell_sr, auxcell_sr, kpts).build()
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name, aosym='s2')
+             v_s2 = []
+             for ki in range(nkpts):
+@@ -458,7 +457,7 @@ class KnownValues(unittest.TestCase):
+ 
+     def test_make_j3c_j_only_sr(self):
+         dfbuilder = gdf_builder._CCGDFBuilder(cell_sr, auxcell_sr, kpts).build()
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name, aosym='s2', j_only=True)
+             v_s2 = []
+             for ki in range(nkpts):
+@@ -506,7 +505,7 @@ class KnownValues(unittest.TestCase):
+         j3c = lib.dot(auxG.conj()*wcoulG, aopair.reshape(ngrids,-1))
+         j2c = scipy.linalg.cholesky(j2c[0], lower=True)
+         ref = scipy.linalg.solve_triangular(j2c, j3c, lower=True)
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name, aosym='s2', j_only=True)
+             v1 = load(tmpf.name, kpts[[0, 0]])
+             self.assertAlmostEqual(abs(ref - v1).max(), 0, 7)
+diff --git a/pyscf/pbc/df/test/test_mdf_builder.py b/pyscf/pbc/df/test/test_mdf_builder.py
+index ca519c587..f1de15a61 100644
+--- a/pyscf/pbc/df/test/test_mdf_builder.py
++++ b/pyscf/pbc/df/test/test_mdf_builder.py
+@@ -13,7 +13,6 @@
+ # limitations under the License.
+ 
+ import unittest
+-import tempfile
+ import numpy as np
+ import scipy.linalg
+ from pyscf import lib
+@@ -109,7 +108,7 @@ class KnownValues(unittest.TestCase):
+ 
+     def test_ccmdf_make_j3c_gamma(self):
+         dfbuilder = mdf._CCMDFBuilder(cell, auxcell).set(mesh=mesh).build()
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name, aosym='s2')
+             v2 = load(tmpf.name, kpts[[0, 0]])
+             self.assertAlmostEqual(lib.fp(v2), 0.01486794482668373, 7)
+@@ -127,7 +126,7 @@ class KnownValues(unittest.TestCase):
+ 
+     def test_ccmdf_make_j3c(self):
+         dfbuilder = mdf._CCMDFBuilder(cell, auxcell, kpts).set(mesh=mesh).build()
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name, aosym='s2')
+             v_s2 = []
+             for ki in range(nkpts):
+@@ -149,7 +148,7 @@ class KnownValues(unittest.TestCase):
+ 
+     def test_ccmdf_make_j3c_j_only(self):
+         dfbuilder = mdf._CCMDFBuilder(cell, auxcell, kpts).set(mesh=mesh).build()
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name, aosym='s2', j_only=True)
+             v_s2 = []
+             for ki in range(nkpts):
+@@ -200,7 +199,7 @@ class KnownValues(unittest.TestCase):
+         j2c = dfbuilder.eigenvalue_decomposed_metric(j2c[0])
+         ref = lib.dot(j2c[0], j3c)
+         ref = ref.T.dot(ref)
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name, aosym='s2', j_only=True)
+             v1 = load(tmpf.name, kpts[[0, 0]])
+             self.assertAlmostEqual(abs(ref - v1).max(), 0, 8)
+@@ -224,7 +223,7 @@ class KnownValues(unittest.TestCase):
+ 
+     def test_rsmdf_make_j3c_gamma(self):
+         dfbuilder = mdf._RSMDFBuilder(cell, auxcell).set(mesh=mesh).build()
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name, aosym='s2')
+             v2 = load(tmpf.name, kpts[[0, 0]])
+             self.assertAlmostEqual(lib.fp(v2), 0.01486794482668373, 7)
+@@ -257,7 +256,7 @@ class KnownValues(unittest.TestCase):
+ 
+     def test_rsmdf_make_j3c(self):
+         dfbuilder = mdf._RSMDFBuilder(cell, auxcell, kpts).set(mesh=mesh).build()
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name, aosym='s2')
+             v_s2 = []
+             for ki in range(nkpts):
+@@ -279,7 +278,7 @@ class KnownValues(unittest.TestCase):
+ 
+     def test_rsmdf_make_j3c_j_only(self):
+         dfbuilder = mdf._RSMDFBuilder(cell, auxcell, kpts).set(mesh=mesh).build()
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name, aosym='s2', j_only=True)
+             v_s2 = []
+             for ki in range(nkpts):
+@@ -316,7 +315,7 @@ class KnownValues(unittest.TestCase):
+ 
+     def test_ccmdf_make_j3c_gamma_lr(self):
+         dfbuilder = mdf._CCMDFBuilder(cell_lr, auxcell_lr).set(mesh=mesh).build()
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name, aosym='s2')
+             v2 = load(tmpf.name, kpts[[0, 0]])
+             self.assertAlmostEqual(lib.fp(v2), 1.0439710349332878e-05, 7)
+@@ -334,7 +333,7 @@ class KnownValues(unittest.TestCase):
+ 
+     def test_ccmdf_make_j3c_lr(self):
+         dfbuilder = mdf._CCMDFBuilder(cell_lr, auxcell_lr, kpts).set(mesh=mesh).build()
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name, aosym='s2')
+             v_s2 = []
+             for ki in range(nkpts):
+@@ -356,7 +355,7 @@ class KnownValues(unittest.TestCase):
+ 
+     def test_ccmdf_make_j3c_j_only_lr(self):
+         dfbuilder = mdf._CCMDFBuilder(cell_lr, auxcell_lr, kpts).set(mesh=mesh).build()
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name, aosym='s2', j_only=True)
+             v_s2 = []
+             for ki in range(nkpts):
+@@ -411,7 +410,7 @@ class KnownValues(unittest.TestCase):
+         j2c = dfbuilder.eigenvalue_decomposed_metric(j2c[0])
+         ref = lib.dot(j2c[0], j3c)
+         ref = ref.T.dot(ref)
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name, aosym='s2', j_only=True)
+             v1 = load(tmpf.name, kpts[[0, 0]])
+             self.assertAlmostEqual(abs(ref - v1).max(), 0, 9)
+@@ -437,7 +436,7 @@ class KnownValues(unittest.TestCase):
+ 
+     def test_ccmdf_make_j3c_gamma_sr(self):
+         dfbuilder = mdf._CCMDFBuilder(cell_sr, auxcell_sr).set(mesh=mesh).build()
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name, aosym='s2')
+             v2 = load(tmpf.name, kpts[[0, 0]])
+             self.assertAlmostEqual(lib.fp(v2), 0.014857466177913803, 7)
+@@ -455,7 +454,7 @@ class KnownValues(unittest.TestCase):
+ 
+     def test_ccmdf_make_j3c_sr(self):
+         dfbuilder = mdf._CCMDFBuilder(cell_sr, auxcell_sr, kpts).set(mesh=mesh).build()
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name, aosym='s2')
+             v_s2 = []
+             for ki in range(nkpts):
+@@ -477,7 +476,7 @@ class KnownValues(unittest.TestCase):
+ 
+     def test_ccmdf_make_j3c_j_only_sr(self):
+         dfbuilder = mdf._CCMDFBuilder(cell_sr, auxcell_sr, kpts).set(mesh=mesh).build()
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name, aosym='s2', j_only=True)
+             v_s2 = []
+             for ki in range(nkpts):
+@@ -531,7 +530,7 @@ class KnownValues(unittest.TestCase):
+         j2c = dfbuilder.eigenvalue_decomposed_metric(j2c[0])
+         ref = lib.dot(j2c[0], j3c)
+         ref = ref.T.dot(ref)
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name, aosym='s2', j_only=True)
+             v1 = load(tmpf.name, kpts[[0, 0]])
+             self.assertAlmostEqual(abs(ref - v1).max(), 0, 8)
+@@ -557,7 +556,7 @@ class KnownValues(unittest.TestCase):
+ 
+     def test_rsmdf_make_j3c_gamma_sr(self):
+         dfbuilder = mdf._RSMDFBuilder(cell_sr, auxcell_sr).set(mesh=mesh).build()
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name, aosym='s2')
+             v2 = load(tmpf.name, kpts[[0, 0]])
+             self.assertAlmostEqual(lib.fp(v2), 0.014857466177913803, 7)
+@@ -590,7 +589,7 @@ class KnownValues(unittest.TestCase):
+ 
+     def test_rsmdf_make_j3c_sr(self):
+         dfbuilder = mdf._RSMDFBuilder(cell_sr, auxcell_sr, kpts).set(mesh=mesh).build()
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name, aosym='s2')
+             v_s2 = []
+             for ki in range(nkpts):
+@@ -612,7 +611,7 @@ class KnownValues(unittest.TestCase):
+ 
+     def test_rsmdf_make_j3c_j_only_sr(self):
+         dfbuilder = mdf._RSMDFBuilder(cell_sr, auxcell_sr, kpts).set(mesh=mesh).build()
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name, aosym='s2', j_only=True)
+             v_s2 = []
+             for ki in range(nkpts):
+diff --git a/pyscf/pbc/df/test/test_outcore.py b/pyscf/pbc/df/test/test_outcore.py
+index 4541db132..d2fcf254e 100644
+--- a/pyscf/pbc/df/test/test_outcore.py
++++ b/pyscf/pbc/df/test/test_outcore.py
+@@ -13,7 +13,6 @@
+ # limitations under the License.
+ 
+ import unittest
+-import tempfile
+ import numpy
+ import h5py
+ from pyscf import lib
+@@ -45,7 +44,7 @@ class KnownValues(unittest.TestCase):
+         numpy.random.seed(1)
+         kptij_lst = numpy.random.random((3,2,3))
+         kptij_lst[0] = 0
+-        with tempfile.NamedTemporaryFile(dir=lib.param.TMPDIR) as tmpfile:
++        with lib.NamedTemporaryFile(dir=lib.param.TMPDIR) as tmpfile:
+             outcore.aux_e1(cell, cell, tmpfile.name, aosym='s2', comp=1,
+                            kptij_lst=kptij_lst, verbose=0)
+             refk = incore.aux_e2(cell, cell, aosym='s1', kptij_lst=kptij_lst)
+diff --git a/pyscf/pbc/df/test/test_rsdf_1.py b/pyscf/pbc/df/test/test_rsdf_1.py
+index 9f29f9b9e..01d7f3788 100644
+--- a/pyscf/pbc/df/test/test_rsdf_1.py
++++ b/pyscf/pbc/df/test/test_rsdf_1.py
+@@ -13,7 +13,6 @@
+ # limitations under the License.
+ 
+ import unittest
+-import tempfile
+ import numpy as np
+ import scipy.linalg
+ from pyscf import lib
+@@ -88,7 +87,7 @@ class KnownValues(unittest.TestCase):
+         dfbuilder = rsdf._RSGDFBuilder(cell, auxcell, kpts)
+         dfbuilder.__dict__.update(dfobj.__dict__)
+         dfbuilder.build()
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name)
+             v2 = load(tmpf.name, kpts[[0, 0]])
+             self.assertAlmostEqual(lib.fp(v2), 1.4877735852543206, 8)
+@@ -97,7 +96,7 @@ class KnownValues(unittest.TestCase):
+         dfbuilder = rsdf._RSGDFBuilder(cell, auxcell, kpts)
+         dfbuilder.__dict__.update(dfobj.__dict__)
+         dfbuilder.build()
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name, aosym='s2')
+             self.assertAlmostEqual(lib.fp(load(tmpf.name, kpts[[0, 0]])), 1.4877735860707935, 7)
+             self.assertAlmostEqual(lib.fp(load(tmpf.name, kpts[[2, 4]])), 4.530919637533813+0.10852447737595214j, 7)
+@@ -107,7 +106,7 @@ class KnownValues(unittest.TestCase):
+         dfbuilder = rsdf._RSGDFBuilder(cell, auxcell, kpts)
+         dfbuilder.__dict__.update(dfobj.__dict__)
+         dfbuilder.build()
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name, aosym='s2', j_only=True)
+             self.assertAlmostEqual(lib.fp(load(tmpf.name, kpts[[0, 0]])), 1.4877735860707935, 7)
+             self.assertAlmostEqual(lib.fp(load(tmpf.name, kpts[[2, 2]])), 1.4492567814298059, 7)
+@@ -147,7 +146,7 @@ class KnownValues(unittest.TestCase):
+         j3c = lib.dot(auxG.conj()*coulG, aopair.reshape(ngrids,-1))
+         j2c = scipy.linalg.cholesky(j2c[0], lower=True)
+         ref = scipy.linalg.solve_triangular(j2c, j3c, lower=True)
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name, aosym='s2', j_only=True)
+             v1 = load(tmpf.name, kpts[[0, 0]])
+             self.assertAlmostEqual(abs(ref - v1).max(), 0, 9)
+diff --git a/pyscf/pbc/df/test/test_rsdf_builder.py b/pyscf/pbc/df/test/test_rsdf_builder.py
+index 0edec5ebd..61abe2956 100644
+--- a/pyscf/pbc/df/test/test_rsdf_builder.py
++++ b/pyscf/pbc/df/test/test_rsdf_builder.py
+@@ -13,7 +13,6 @@
+ # limitations under the License.
+ 
+ import unittest
+-import tempfile
+ import numpy as np
+ import scipy.linalg
+ from pyscf import lib
+@@ -116,7 +115,7 @@ class KnownValues(unittest.TestCase):
+ 
+     def test_make_j3c_gamma(self):
+         dfbuilder = rsdf_builder._RSGDFBuilder(cell, auxcell).build()
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name)
+             v2 = load(tmpf.name, kpts[[0, 0]])
+             self.assertAlmostEqual(lib.fp(v2), 1.5094843470069796, 7)
+@@ -145,7 +144,7 @@ class KnownValues(unittest.TestCase):
+ 
+     def test_make_j3c(self):
+         dfbuilder = rsdf_builder._RSGDFBuilder(cell, auxcell, kpts).build()
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name, aosym='s2')
+             v_s2 = []
+             for ki in range(nkpts):
+@@ -168,7 +167,7 @@ class KnownValues(unittest.TestCase):
+ 
+     def test_make_j3c_j_only(self):
+         dfbuilder = rsdf_builder._RSGDFBuilder(cell, auxcell, kpts).build()
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name, aosym='s2', j_only=True)
+             v_s2 = []
+             for ki in range(nkpts):
+@@ -189,13 +188,13 @@ class KnownValues(unittest.TestCase):
+         kj_idx = np.array([15, 18, 21, 1, 2 , 4, 5])
+         kij_idx = np.array([ki_idx,kj_idx]).T
+         kptij_lst = kpts[kij_idx]
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             cderi = tmpf.name
+             dfbuilder.make_j3c(cderi, aosym='s1')
+             with df.CDERIArray(cderi) as cderi_array:
+                 ref = np.array([cderi_array[ki, kj] for ki, kj in kij_idx])
+ 
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             cderi = tmpf.name
+             dfbuilder.make_j3c(cderi, aosym='s1', kptij_lst=kptij_lst)
+             with df.CDERIArray(cderi) as cderi_array:
+@@ -210,7 +209,7 @@ class KnownValues(unittest.TestCase):
+                       dimension=2)
+         auxcell = df.make_auxcell(cell, auxbasis)
+         dfbuilder = rsdf_builder._RSGDFBuilder(cell, auxcell).build()
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name)
+             v2 = load(tmpf.name, kpts[[0, 0]])
+             self.assertAlmostEqual(lib.fp(v2.T.dot(v2)), 0.3289627476345819, 7)
+@@ -223,7 +222,7 @@ class KnownValues(unittest.TestCase):
+                       dimension=1)
+         auxcell = df.make_auxcell(cell, auxbasis)
+         dfbuilder = rsdf_builder._RSGDFBuilder(cell, auxcell).build()
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name)
+             v2 = load(tmpf.name, kpts[[0, 0]])
+             self.assertAlmostEqual(lib.fp(v2), 1.7171973261620863, 5)
+@@ -236,7 +235,7 @@ class KnownValues(unittest.TestCase):
+                       dimension=0)
+         auxcell = df.make_auxcell(cell, auxbasis)
+         dfbuilder = rsdf_builder._RSGDFBuilder(cell, auxcell).build()
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name)
+             v2 = load(tmpf.name, kpts[[0, 0]])
+         ref = cholesky_eri(cell, auxmol=auxcell)
+@@ -314,7 +313,7 @@ class KnownValues(unittest.TestCase):
+         j3c = lib.dot(auxG.conj()*wcoulG, aopair.reshape(ngrids,-1))
+         j2c = scipy.linalg.cholesky(j2c[0], lower=True)
+         ref = scipy.linalg.solve_triangular(j2c, j3c, lower=True)
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name, aosym='s2', j_only=True)
+             v1 = load(tmpf.name, kpts[[0, 0]])
+             self.assertAlmostEqual(abs(ref - v1).max(), 0, 7)
+@@ -344,7 +343,7 @@ class KnownValues(unittest.TestCase):
+ 
+     def test_make_j3c_gamma_sr(self):
+         dfbuilder = rsdf_builder._RSGDFBuilder(cell_sr, auxcell_sr).build()
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name)
+             v2 = load(tmpf.name, kpts[[0, 0]])
+             self.assertAlmostEqual(lib.fp(v2), 0.9647178630614499, 8)
+@@ -373,7 +372,7 @@ class KnownValues(unittest.TestCase):
+ 
+     def test_make_j3c_sr_high_cost(self):
+         dfbuilder = rsdf_builder._RSGDFBuilder(cell_sr, auxcell_sr, kpts).build()
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name, aosym='s2')
+             v_s2 = []
+             for ki in range(nkpts):
+@@ -397,7 +396,7 @@ class KnownValues(unittest.TestCase):
+ 
+     def test_make_j3c_j_only_sr(self):
+         dfbuilder = rsdf_builder._RSGDFBuilder(cell_sr, auxcell_sr, kpts).build()
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name, aosym='s2', j_only=True)
+             v_s2 = []
+             for ki in range(nkpts):
+@@ -445,7 +444,7 @@ class KnownValues(unittest.TestCase):
+         j3c = lib.dot(auxG.conj()*wcoulG, aopair.reshape(ngrids,-1))
+         j2c = scipy.linalg.cholesky(j2c[0], lower=True)
+         ref = scipy.linalg.solve_triangular(j2c, j3c, lower=True)
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.make_j3c(tmpf.name, aosym='s2', j_only=True)
+             v1 = load(tmpf.name, kpts[[0, 0]])
+             self.assertAlmostEqual(abs(ref - v1).max(), 0, 7)
+@@ -471,7 +470,7 @@ class KnownValues(unittest.TestCase):
+         dfbuilder = rsdf_builder._RSGDFBuilder(cell, auxcell, kpts)
+         dfbuilder.fft_dd_block = False
+         dfbuilder.exclude_d_aux = False
+-        with tempfile.NamedTemporaryFile() as tmpf:
++        with lib.NamedTemporaryFile() as tmpf:
+             dfbuilder.build()
+             dfbuilder.make_j3c(tmpf.name)
+             nkpts = len(kpts)
+diff --git a/pyscf/pbc/dft/test/test_rks.py b/pyscf/pbc/dft/test/test_rks.py
+index 8acb24652..ec641b2f1 100644
+--- a/pyscf/pbc/dft/test/test_rks.py
++++ b/pyscf/pbc/dft/test/test_rks.py
+@@ -18,8 +18,8 @@
+ #
+ 
+ import unittest
+-import tempfile
+ import numpy as np
++from pyscf import lib
+ from pyscf.pbc import gto as pbcgto
+ from pyscf.pbc import dft as pbcdft
+ import pyscf.pbc
+@@ -82,8 +82,8 @@ class KnownValues(unittest.TestCase):
+         cell.verbose = 0
+         cell.build()
+         mf1 = pbcdft.RKS(cell)
+-        mf1.chkfile = tempfile.NamedTemporaryFile().name
+         mf1.max_cycle = 1
++        mf1.chkfile = lib.NamedTemporaryFile().name
+         mf1.kernel()
+ 
+         cell = pbcgto.Cell()
+diff --git a/pyscf/pbc/gto/test/test_cell.py b/pyscf/pbc/gto/test/test_cell.py
+index cb2ce01c2..d847d01c5 100644
+--- a/pyscf/pbc/gto/test/test_cell.py
++++ b/pyscf/pbc/gto/test/test_cell.py
+@@ -17,7 +17,6 @@
+ #
+ 
+ import unittest
+-import tempfile
+ import ctypes
+ import numpy
+ import numpy as np
+@@ -616,7 +615,7 @@ S
+ 
+     def test_fromfile(self):
+         ref = cl.atom_coords().copy()
+-        with tempfile.NamedTemporaryFile() as f:
++        with lib.NamedTemporaryFile() as f:
+             cl.tofile(f.name, 'xyz')
+             cell = pgto.Cell()
+             cell.fromfile(f.name, 'xyz')
+diff --git a/pyscf/pbc/scf/test/test_hf.py b/pyscf/pbc/scf/test/test_hf.py
+index 6abe18fb1..df39dfe39 100644
+--- a/pyscf/pbc/scf/test/test_hf.py
++++ b/pyscf/pbc/scf/test/test_hf.py
+@@ -17,7 +17,6 @@
+ #
+ 
+ import unittest
+-import tempfile
+ import numpy
+ from pyscf import lib
+ from pyscf.scf import atom_hf
+@@ -153,9 +152,9 @@ class KnownValues(unittest.TestCase):
+         numpy.random.seed(1)
+         k = numpy.random.random(3)
+         mf = pbchf.RHF(cell, k, exxdiv='vcut_sph')
+-        mf.chkfile = tempfile.NamedTemporaryFile().name
+         mf.max_cycle = 1
+         mf.diis = None
++        mf.chkfile = lib.NamedTemporaryFile().name
+         e1 = mf.kernel()
+         self.assertAlmostEqual(e1, -4.132445328608581, 7)
+ 
+diff --git a/pyscf/pbc/scf/test/test_khf.py b/pyscf/pbc/scf/test/test_khf.py
+index 101d6b12f..f400c405a 100644
+--- a/pyscf/pbc/scf/test/test_khf.py
++++ b/pyscf/pbc/scf/test/test_khf.py
+@@ -18,7 +18,6 @@
+ #
+ 
+ import unittest
+-import tempfile
+ import numpy as np
+ 
+ from pyscf import lib
+@@ -101,8 +100,8 @@ class KnownValues(unittest.TestCase):
+ 
+         kpts = cell.make_kpts(nk)
+         kmf = khf.KRHF(cell, kpts, exxdiv='vcut_sph')
+-        kmf.chkfile = tempfile.NamedTemporaryFile().name
+         kmf.conv_tol = 1e-9
++        kmf.chkfile = lib.NamedTemporaryFile().name
+         ekpt = kmf.scf()
+         dm1 = kmf.make_rdm1()
+         dm2 = kmf.from_chk(kmf.chkfile)
+diff --git a/pyscf/pbc/scf/test/test_rohf.py b/pyscf/pbc/scf/test/test_rohf.py
+index b093ef0c9..641a0f947 100644
+--- a/pyscf/pbc/scf/test/test_rohf.py
++++ b/pyscf/pbc/scf/test/test_rohf.py
+@@ -15,7 +15,6 @@
+ #
+ 
+ import unittest
+-import tempfile
+ import numpy as np
+ from pyscf import lib
+ from pyscf.pbc import gto as pgto
+@@ -80,10 +79,10 @@ class KnownValues(unittest.TestCase):
+         np.random.seed(1)
+         k = np.random.random(3)
+         mf = pscf.KROHF(cell, [k], exxdiv='vcut_sph')
+-        mf.chkfile = tempfile.NamedTemporaryFile().name
+         mf.init_guess = 'hcore'
+         mf.max_cycle = 1
+         mf.diis = None
++        mf.chkfile = lib.NamedTemporaryFile().name
+         e1 = mf.kernel()
+         self.assertAlmostEqual(e1, -3.4376090968645068, 7)
+ 
+diff --git a/pyscf/pbc/scf/test/test_uhf.py b/pyscf/pbc/scf/test/test_uhf.py
+index 195c207ee..c684b0ca3 100644
+--- a/pyscf/pbc/scf/test/test_uhf.py
++++ b/pyscf/pbc/scf/test/test_uhf.py
+@@ -15,7 +15,6 @@
+ #
+ 
+ import unittest
+-import tempfile
+ import numpy as np
+ from pyscf import lib
+ from pyscf.pbc import gto as pgto
+@@ -82,9 +81,9 @@ class KnownValues(unittest.TestCase):
+         np.random.seed(1)
+         k = np.random.random(3)
+         mf = pscf.KUHF(cell, [k], exxdiv='vcut_sph')
+-        mf.chkfile = tempfile.NamedTemporaryFile().name
+         mf.max_cycle = 1
+         mf.diis = None
++        mf.chkfile = lib.NamedTemporaryFile().name
+         e1 = mf.kernel()
+         self.assertAlmostEqual(e1, -3.4070772194665477, 7)
+ 
+diff --git a/pyscf/scf/hf.py b/pyscf/scf/hf.py
+index 3fcab01f8..3ab90bc8a 100644
+--- a/pyscf/scf/hf.py
++++ b/pyscf/scf/hf.py
+@@ -21,8 +21,6 @@ Hartree-Fock
+ '''
+ 
+ import sys
+-import tempfile
+-
+ from functools import reduce
+ import numpy
+ import scipy.linalg
+@@ -1771,7 +1769,7 @@ class SCF(lib.StreamObject):
+         else:
+             # the chkfile will be removed automatically, to save the chkfile, assign a
+             # filename to self.chkfile
+-            self._chkfile = tempfile.NamedTemporaryFile(dir=lib.param.TMPDIR)
++            self._chkfile = lib.NamedTemporaryFile(dir=lib.param.TMPDIR)
+             self.chkfile = self._chkfile.name
+ 
+ ##################################################
+diff --git a/pyscf/scf/test/test_diis.py b/pyscf/scf/test/test_diis.py
+index afa53d989..524f220e1 100644
+--- a/pyscf/scf/test/test_diis.py
++++ b/pyscf/scf/test/test_diis.py
+@@ -14,9 +14,9 @@
+ # limitations under the License.
+ 
+ import unittest
+-import tempfile
+ import numpy
+ from pyscf import gto
++from pyscf import lib
+ from pyscf import scf
+ from pyscf.scf import diis
+ 
+@@ -82,7 +82,7 @@ class KnownValues(unittest.TestCase):
+         H     0    1.757    1.587''',
+             basis = '631g',
+         )
+-        tmpf = tempfile.NamedTemporaryFile()
++        tmpf = lib.NamedTemporaryFile()
+         mf = scf.RHF(mol)
+         mf.diis_file = tmpf.name
+         eref = mf.kernel()
+diff --git a/pyscf/scf/test/test_ghf.py b/pyscf/scf/test/test_ghf.py
+index e5ce7b393..4639e7f89 100644
+--- a/pyscf/scf/test/test_ghf.py
++++ b/pyscf/scf/test/test_ghf.py
+@@ -17,7 +17,6 @@
+ #
+ 
+ import unittest
+-import tempfile
+ import numpy
+ import scipy.linalg
+ from functools import reduce
+@@ -41,7 +40,7 @@ def setUpModule():
+     )
+     mf = scf.GHF(mol)
+     mf.conv_tol = 1e-12
+-    mf.chkfile = tempfile.NamedTemporaryFile().name
++    mf.chkfile = lib.NamedTemporaryFile().name
+     mf.kernel()
+ 
+     molsym = gto.M(
+@@ -57,8 +56,8 @@ def setUpModule():
+     mfsym = scf.GHF(molsym).run(conv_tol=1e-10)
+ 
+     mol1 = gto.M(atom=mol.atom, basis='631g', spin=2, verbose=0)
+-    mf_r = scf.RHF(mol1).run(conv_tol=1e-10, chkfile=tempfile.NamedTemporaryFile().name)
+-    mf_u = scf.RHF(mol1).run(conv_tol=1e-10, chkfile=tempfile.NamedTemporaryFile().name)
++    mf_r = scf.RHF(mol1).run(conv_tol=1e-10, chkfile=lib.NamedTemporaryFile().name)
++    mf_u = scf.RHF(mol1).run(conv_tol=1e-10, chkfile=lib.NamedTemporaryFile().name)
+ 
+ def tearDownModule():
+     global mol, mf, molsym, mfsym, mol1, mf_r, mf_u
+@@ -110,7 +109,7 @@ class KnownValues(unittest.TestCase):
+         self.assertAlmostEqual(lib.fp(dm[24:,24:])*2, 2.7821827416174094, 7)
+ 
+     def test_init_guess_chk(self):
+-        dm = mol.GHF(chkfile=tempfile.NamedTemporaryFile().name).get_init_guess(mol, key='chkfile')
++        dm = mol.GHF(chkfile=lib.NamedTemporaryFile().name).get_init_guess(mol, key='chkfile')
+         self.assertEqual(dm.shape, (48,48))
+         self.assertAlmostEqual(lib.fp(dm), 1.8117584283411752, 5)
+ 
+diff --git a/pyscf/scf/test/test_h2o.py b/pyscf/scf/test/test_h2o.py
+index b545e177c..1eb8d78b8 100644
+--- a/pyscf/scf/test/test_h2o.py
++++ b/pyscf/scf/test/test_h2o.py
+@@ -19,7 +19,6 @@
+ import unittest
+ import numpy
+ import scipy.linalg
+-import tempfile
+ from pyscf import lib
+ from pyscf import gto
+ from pyscf import scf
+@@ -196,7 +195,7 @@ class KnownValues(unittest.TestCase):
+         self.assertEqual(dm.mo_occ.size, dm.mo_coeff.shape[1])
+         s = scf.hf.get_ovlp(mol)
+         occ, mo = scipy.linalg.eigh(dm, s, type=2)
+-        ftmp = tempfile.NamedTemporaryFile(dir=lib.param.TMPDIR)
++        ftmp = lib.NamedTemporaryFile(dir=lib.param.TMPDIR)
+         scf.chkfile.dump_scf(mol, ftmp.name, 0, occ, mo, occ)
+         self.assertAlmostEqual(numpy.linalg.norm(dm), 3.0334714065913508, 9)
+ 
+@@ -220,7 +219,7 @@ class KnownValues(unittest.TestCase):
+         self.assertEqual(dm.mo_occ.size, dm.mo_coeff.shape[1])
+         s = scf.hf.get_ovlp(mol)
+         occ, mo = scipy.linalg.eigh(dm, s, type=2)
+-        ftmp = tempfile.NamedTemporaryFile(dir=lib.param.TMPDIR)
++        ftmp = lib.NamedTemporaryFile(dir=lib.param.TMPDIR)
+         scf.chkfile.dump_scf(mol, ftmp.name, 0, occ, mo, occ)
+         self.assertAlmostEqual(numpy.linalg.norm(dm), 3.041411845876416, 8)
+ 
+@@ -249,7 +248,7 @@ class KnownValues(unittest.TestCase):
+         self.assertEqual(dm.mo_occ.size, dm.mo_coeff.shape[1])
+         s = scf.hf.get_ovlp(mol)
+         occ, mo = scipy.linalg.eigh(dm, s, type=2)
+-        ftmp = tempfile.NamedTemporaryFile(dir=lib.param.TMPDIR)
++        ftmp = lib.NamedTemporaryFile(dir=lib.param.TMPDIR)
+         scf.chkfile.dump_scf(mol, ftmp.name, 0, occ, mo, occ,
+                              overwrite_mol=False)  # dump_scf twice to test overwrite_mol
+         scf.chkfile.dump_scf(mol, ftmp.name, 0, occ, mo, occ)
+@@ -275,7 +274,7 @@ class KnownValues(unittest.TestCase):
+         self.assertAlmostEqual(numpy.linalg.norm(dm1), 7.5925205205065422, 9)
+ 
+     def test_init_guess_chkfile(self):
+-        ftmp = tempfile.NamedTemporaryFile(dir=lib.param.TMPDIR)
++        ftmp = lib.NamedTemporaryFile(dir=lib.param.TMPDIR)
+         def save(HFclass):
+             mf0 = HFclass(mol)
+             mf0.chkfile = ftmp.name
+diff --git a/pyscf/scf/test/test_rhf.py b/pyscf/scf/test/test_rhf.py
+index 25a09e9b9..92466eb81 100644
+--- a/pyscf/scf/test/test_rhf.py
++++ b/pyscf/scf/test/test_rhf.py
+@@ -18,7 +18,6 @@
+ 
+ import numpy
+ import unittest
+-import tempfile
+ from pyscf import lib
+ from pyscf import gto
+ from pyscf import scf
+@@ -44,7 +43,7 @@ def setUpModule():
+ 
+     mf = scf.RHF(mol)
+     mf.conv_tol = 1e-10
+-    mf.chkfile = tempfile.NamedTemporaryFile().name
++    mf.chkfile = lib.NamedTemporaryFile().name
+     mf.kernel()
+ 
+     n2sym = gto.M(
+@@ -224,7 +223,7 @@ class KnownValues(unittest.TestCase):
+         self.assertAlmostEqual(scf_result['Cu'][0], -194.92388639203045, 9)
+ 
+     def test_init_guess_chk(self):
+-        dm = mol.HF(chkfile=tempfile.NamedTemporaryFile().name).get_init_guess(mol, key='chkfile')
++        dm = mol.HF(chkfile=lib.NamedTemporaryFile().name).get_init_guess(mol, key='chkfile')
+         self.assertAlmostEqual(lib.fp(dm), 2.5912875957299684, 5)
+ 
+         dm = mf.get_init_guess(mol, key='chkfile')
+@@ -758,12 +757,12 @@ H     0    0.757    0.587'''
+         self.assertAlmostEqual(mf_scanner(mol.atom), -76.075408156235909, 9)
+ 
+         mol1 = gto.M(atom='H 0 0 0; H 0 0 .9', basis='cc-pvdz')
+-        ref = mol1.RHF(chkfile=tempfile.NamedTemporaryFile().name).x2c().density_fit().run()
++        ref = mol1.RHF(chkfile=lib.NamedTemporaryFile().name).x2c().density_fit().run()
+         e1 = mf_scanner('H 0 0 0; H 0 0 .9')
+         self.assertAlmostEqual(e1, -1.116394048204042, 9)
+         self.assertAlmostEqual(e1, ref.e_tot, 9)
+ 
+-        mfs = mol1.RHF(chkfile=tempfile.NamedTemporaryFile().name).as_scanner()
++        mfs = mol1.RHF(chkfile=lib.NamedTemporaryFile().name).as_scanner()
+         mfs.__dict__.update(scf.chkfile.load(ref.chkfile, 'scf'))
+         e = mfs(mol1)
+         self.assertAlmostEqual(e, -1.1163913004438035, 9)
+diff --git a/pyscf/solvent/pol_embed.py b/pyscf/solvent/pol_embed.py
+index b6b48e0c9..17cb71c09 100644
+--- a/pyscf/solvent/pol_embed.py
++++ b/pyscf/solvent/pol_embed.py
+@@ -496,7 +496,7 @@ if __name__ == '__main__':
+            1        0.000000   -0.935307   -1.082500
+                 ''', basis='sto3g')
+     mf = mol.RHF()
+-    with tempfile.NamedTemporaryFile() as f:
++    with lib.NamedTemporaryFile() as f:
+         f.write(b'''!
+ @COORDINATES
+ 3
+diff --git a/pyscf/solvent/test/test_pol_embed.py b/pyscf/solvent/test/test_pol_embed.py
+index 2f6289bee..ec45acd25 100644
+--- a/pyscf/solvent/test/test_pol_embed.py
++++ b/pyscf/solvent/test/test_pol_embed.py
+@@ -15,7 +15,6 @@
+ 
+ import unittest
+ import os
+-import tempfile
+ import numpy
+ from numpy.testing import assert_allclose
+ from pyscf import lib, gto, scf, dft
+@@ -34,7 +33,7 @@ dname = os.path.dirname(__file__)
+ 
+ def setUpModule():
+     global potf, potf2, mol, mol2, potfile, potfile2
+-    potf = tempfile.NamedTemporaryFile()
++    potf = lib.NamedTemporaryFile()
+     potf.write(b'''!
+ @COORDINATES
+ 3
+@@ -70,7 +69,7 @@ EXCLISTS
+                 ''', basis='sto3g', verbose=7,
+                 output='/dev/null')
+ 
+-    potf2 = tempfile.NamedTemporaryFile()
++    potf2 = lib.NamedTemporaryFile()
+     potf2.write(b'''! water molecule + a large, positive charge to force electron spill-out
+ @COORDINATES
+ 4
+@@ -294,7 +293,7 @@ class TestPolEmbed(unittest.TestCase):
+         self.assertAlmostEqual(mf.e_tot, -168.147494986446, 8)
+ 
+     def test_as_scanner(self):
+-        mf = mol.RHF(chkfile=tempfile.NamedTemporaryFile().name)
++        mf = mol.RHF(chkfile=lib.NamedTemporaryFile().name)
+         mf_scanner = solvent.PE(mf, potfile).as_scanner()
+         mf_scanner(mol)
+         self.assertAlmostEqual(mf_scanner.with_solvent.e, 0.00020182314249546455, 9)
+diff --git a/pyscf/tdscf/test/test_tddks.py b/pyscf/tdscf/test/test_tddks.py
+index 742671cea..084887cb8 100644
+--- a/pyscf/tdscf/test/test_tddks.py
++++ b/pyscf/tdscf/test/test_tddks.py
+@@ -17,7 +17,6 @@
+ #
+ 
+ import unittest
+-import tempfile
+ import numpy
+ from pyscf import lib, gto, scf, dft
+ from pyscf import tdscf
+@@ -38,8 +37,7 @@ H     0.   0.7   0.7'''
+     mol.basis = 'uncsto3g'
+     mol.spin = 1
+     mol.build()
+-    mf_lda = mol.DKS().set(xc='lda,', conv_tol=1e-12,
+-                           chkfile=tempfile.NamedTemporaryFile().name).run()
++    mf_lda = mol.DKS().set(xc='lda,', conv_tol=1e-12, chkfile=lib.NamedTemporaryFile().name).run()
+ 
+ def tearDownModule():
+     global mol, mf_lda
+diff --git a/pyscf/tdscf/test/test_tdgks.py b/pyscf/tdscf/test/test_tdgks.py
+index 30ee8a92b..4411664f1 100644
+--- a/pyscf/tdscf/test/test_tdgks.py
++++ b/pyscf/tdscf/test/test_tdgks.py
+@@ -17,7 +17,6 @@
+ #
+ 
+ import unittest
+-import tempfile
+ import numpy
+ from pyscf import lib, gto, scf, dft
+ from pyscf import tdscf
+@@ -48,16 +47,14 @@ H     0.   0.7   0.7'''
+     mol.spin = 1
+     mol.build()
+ 
+-    mf_lda = mol.GKS().set(xc='lda,', conv_tol=1e-12,
+-                           chkfile=tempfile.NamedTemporaryFile().name).newton().run()
++    mf_lda = mol.GKS().set(xc='lda,', conv_tol=1e-12, chkfile=lib.NamedTemporaryFile().name).newton().run()
+     mcol_lda = None
+     if mcfun is not None:
+-        mcol_lda = mol.GKS().set(xc='lda,', conv_tol=1e-12,
+-                                 collinear='mcol', chkfile=tempfile.NamedTemporaryFile().name)
++        mcol_lda = mol.GKS().set(xc='lda,', conv_tol=1e-12, chkfile=lib.NamedTemporaryFile().name,
++                                  collinear='mcol')
+         mcol_lda._numint.spin_samples = 6
+         mcol_lda = mcol_lda.run()
+-    mf_bp86 = molsym.GKS().set(xc='bp86', conv_tol=1e-12,
+-                               chkfile=tempfile.NamedTemporaryFile().name).run()
++    mf_bp86 = molsym.GKS().set(xc='bp86', conv_tol=1e-12, chkfile=lib.NamedTemporaryFile().name).run()
+ 
+ def tearDownModule():
+     global mol, molsym, mf_bp86, mf_lda, mcol_lda
+diff --git a/pyscf/tools/molden.py b/pyscf/tools/molden.py
+index b8ee5269c..3b2f739e9 100644
+--- a/pyscf/tools/molden.py
++++ b/pyscf/tools/molden.py
+@@ -576,7 +576,7 @@ if __name__ == '__main__':
+     print(order_ao_index(mol))
+     orbital_coeff(mol, mol.stdout, m.mo_coeff)
+ 
+-    ftmp = tempfile.NamedTemporaryFile(dir=lib.param.TMPDIR)
++    ftmp = lib.NamedTemporaryFile(dir=lib.param.TMPDIR)
+     from_mo(mol, ftmp.name, m.mo_coeff)
+ 
+     print(parse(ftmp.name))
+diff --git a/pyscf/tools/test/test_cubegen.py b/pyscf/tools/test/test_cubegen.py
+index 6a383a7e1..cc25623f6 100644
+--- a/pyscf/tools/test/test_cubegen.py
++++ b/pyscf/tools/test/test_cubegen.py
+@@ -14,7 +14,6 @@
+ # limitations under the License.
+ 
+ import unittest
+-import tempfile
+ from pyscf import lib, gto, scf
+ from pyscf.tools import cubegen
+ 
+@@ -35,7 +34,7 @@ def tearDownModule():
+ 
+ class KnownValues(unittest.TestCase):
+     def test_mep(self):
+-        with tempfile.NamedTemporaryFile() as ftmp:
++        with lib.NamedTemporaryFile() as ftmp:
+             mep = cubegen.mep(mol, ftmp.name, mf.make_rdm1(),
+                               nx=10, ny=10, nz=10)
+             self.assertEqual(mep.shape, (10,10,10))
+@@ -47,7 +46,7 @@ class KnownValues(unittest.TestCase):
+             self.assertAlmostEqual(lib.fp(mep), -4.653995909548524, 5)
+ 
+     def test_orb(self):
+-        with tempfile.NamedTemporaryFile() as ftmp:
++        with lib.NamedTemporaryFile() as ftmp:
+             orb = cubegen.orbital(mol, ftmp.name, mf.mo_coeff[:,0],
+                                   nx=10, ny=10, nz=10)
+             self.assertEqual(orb.shape, (10,10,10))
+@@ -65,7 +64,7 @@ class KnownValues(unittest.TestCase):
+ 
+ 
+     def test_rho(self):
+-        with tempfile.NamedTemporaryFile() as ftmp:
++        with lib.NamedTemporaryFile() as ftmp:
+             rho = cubegen.density(mol, ftmp.name, mf.make_rdm1(),
+                                   nx=10, ny=10, nz=10)
+             self.assertEqual(rho.shape, (10,10,10))
+@@ -96,7 +95,7 @@ class KnownValues(unittest.TestCase):
+         cell.output = '/dev/null'
+         cell.build()
+         mf = cell.RHF().run()
+-        with tempfile.NamedTemporaryFile() as ftmp:
++        with lib.NamedTemporaryFile() as ftmp:
+             rho = cubegen.density(cell, ftmp.name, mf.make_rdm1(),
+                                   nx=10, ny=10, nz=10)
+             cc = cubegen.Cube(cell)
+diff --git a/pyscf/tools/test/test_fcidump.py b/pyscf/tools/test/test_fcidump.py
+index 45ae7df48..c51de6092 100644
+--- a/pyscf/tools/test/test_fcidump.py
++++ b/pyscf/tools/test/test_fcidump.py
+@@ -14,13 +14,11 @@
+ # limitations under the License.
+ 
+ import unittest
+-import tempfile
+ from functools import reduce
+ import numpy
+ from pyscf import lib
+ from pyscf import gto, scf, ao2mo
+ from pyscf.tools import fcidump
+-import tempfile
+ 
+ def setUpModule():
+     global mol, mf
+@@ -36,7 +34,7 @@ def setUpModule():
+     mol.verbose = 0
+     mol.build(0, 0)
+ 
+-    mf = mol.RHF(chkfile=tempfile.NamedTemporaryFile().name).run()
++    mf = mol.RHF(chkfile=lib.NamedTemporaryFile().name).run()
+ 
+ def tearDownModule():
+     global mol, mf
+@@ -44,19 +42,19 @@ def tearDownModule():
+ 
+ class KnownValues(unittest.TestCase):
+     def test_from_chkfile(self):
+-        tmpfcidump = tempfile.NamedTemporaryFile(dir=lib.param.TMPDIR)
++        tmpfcidump = lib.NamedTemporaryFile(dir=lib.param.TMPDIR)
+         fcidump.from_chkfile(tmpfcidump.name, mf.chkfile, tol=1e-15,
+                              molpro_orbsym=True)
+ 
+     def test_from_integral(self):
+-        tmpfcidump = tempfile.NamedTemporaryFile(dir=lib.param.TMPDIR)
++        tmpfcidump = lib.NamedTemporaryFile(dir=lib.param.TMPDIR)
+         h1 = reduce(numpy.dot, (mf.mo_coeff.T, mf.get_hcore(), mf.mo_coeff))
+         h2 = ao2mo.full(mf._eri, mf.mo_coeff)
+         fcidump.from_integrals(tmpfcidump.name, h1, h2, h1.shape[0],
+                                mol.nelectron, tol=1e-15)
+ 
+     def test_read(self):
+-        with tempfile.NamedTemporaryFile(mode='w+') as f:
++        with lib.NamedTemporaryFile(mode='w+') as f:
+             f.write('''&FCI NORB=4,
+ NELEC=4, MS2=0, ISYM=1,
+ ORBSYM=1,2,3,4,
+@@ -72,7 +70,7 @@ ORBSYM=1,2,3,4,
+             result = fcidump.read(f.name)
+         self.assertEqual(result['ISYM'], 1)
+ 
+-        with tempfile.NamedTemporaryFile(mode='w+') as f:
++        with lib.NamedTemporaryFile(mode='w+') as f:
+             f.write('''&FCI NORB=4, NELEC=4, MS2=0, ISYM=1,ORBSYM=1,2,3,4, &END
+ 0.42 1 1 1 1
+ 0.33 1 1 2 2
+@@ -87,7 +85,7 @@ ORBSYM=1,2,3,4,
+ 
+     def test_to_scf(self):
+         '''Test from_scf and to_scf'''
+-        tmpfcidump = tempfile.NamedTemporaryFile(dir=lib.param.TMPDIR)
++        tmpfcidump = lib.NamedTemporaryFile(dir=lib.param.TMPDIR)
+         fcidump.from_scf(mf, tmpfcidump.name)
+         mf1 = fcidump.to_scf(tmpfcidump.name)
+         mf1.init_guess = mf.make_rdm1()
+@@ -96,9 +94,9 @@ ORBSYM=1,2,3,4,
+         self.assertTrue(numpy.array_equal(mf.orbsym, mf1.orbsym))
+ 
+     def test_to_scf_with_symmetry(self):
+-        with tempfile.NamedTemporaryFile(dir=lib.param.TMPDIR) as tmpfcidump:
++        with lib.NamedTemporaryFile(dir=lib.param.TMPDIR) as tmpfcidump:
+             mol = gto.M(atom='H 0 0 0; H 1 0 0', symmetry=True)
+-            mf = mol.RHF().run()
++            mf = mol.RHF(chkfile=lib.NamedTemporaryFile().name).run()
+             fcidump.from_scf(mf, tmpfcidump.name)
+             mf = fcidump.to_scf(tmpfcidump.name)
+             self.assertEqual(mf.mol.groupname, 'D2h')
+diff --git a/pyscf/tools/test/test_molden.py b/pyscf/tools/test/test_molden.py
+index 944c7c917..32cbdd24f 100644
+--- a/pyscf/tools/test/test_molden.py
++++ b/pyscf/tools/test/test_molden.py
+@@ -14,7 +14,6 @@
+ # limitations under the License.
+ 
+ import unittest
+-import tempfile
+ from pyscf import lib, gto, scf
+ from pyscf.tools import molden
+ 
+@@ -37,7 +36,7 @@ def tearDownModule():
+ 
+ class KnownValues(unittest.TestCase):
+     def test_dump_scf(self):
+-        ftmp = tempfile.NamedTemporaryFile()
++        ftmp = lib.NamedTemporaryFile()
+         fname = ftmp.name
+         molden.dump_scf(mf, fname)
+         res = molden.read(fname)
+@@ -45,7 +44,7 @@ class KnownValues(unittest.TestCase):
+         self.assertAlmostEqual(abs(mf.mo_coeff-mo_coeff).max(), 0, 12)
+ 
+     def test_dump_uhf(self):
+-        ftmp = tempfile.NamedTemporaryFile()
++        ftmp = lib.NamedTemporaryFile()
+         fname = ftmp.name
+         with lib.temporary_env(mol, spin=2, charge=2):
+             mf = scf.UHF(mol).run()
+@@ -57,7 +56,7 @@ class KnownValues(unittest.TestCase):
+             self.assertAlmostEqual(abs(mf.mo_coeff[1]-mo_coeff[1]).max(), 0, 12)
+ 
+     def test_dump_cartesian_gto_orbital(self):
+-        ftmp = tempfile.NamedTemporaryFile()
++        ftmp = lib.NamedTemporaryFile()
+         fname = ftmp.name
+         with lib.temporary_env(mol, cart=True, symmetry=False):
+             mf = scf.UHF(mol).run()
+@@ -69,7 +68,7 @@ class KnownValues(unittest.TestCase):
+             self.assertAlmostEqual(abs(mf.mo_coeff[1]-mo_coeff[1]).max(), 0, 12)
+ 
+     def test_dump_cartesian_gto_symm_orbital(self):
+-        ftmp = tempfile.NamedTemporaryFile()
++        ftmp = lib.NamedTemporaryFile()
+         fname = ftmp.name
+ 
+         pmol = mol.copy()
+@@ -83,7 +82,7 @@ class KnownValues(unittest.TestCase):
+         self.assertAlmostEqual(abs(mf.mo_coeff-mo_coeff).max(), 0, 12)
+ 
+     def test_basis_not_sorted(self):
+-        with tempfile.NamedTemporaryFile('w') as ftmp:
++        with lib.NamedTemporaryFile('w') as ftmp:
+             ftmp.write('''\
+ [Molden Format]
+ made by pyscf v[2.4.0]
+diff --git a/pyscf/x2c/test/test_tdscf.py b/pyscf/x2c/test/test_tdscf.py
+index a23607b78..3a1aa04ca 100644
+--- a/pyscf/x2c/test/test_tdscf.py
++++ b/pyscf/x2c/test/test_tdscf.py
+@@ -17,7 +17,6 @@
+ #
+ 
+ import unittest
+-import tempfile
+ import numpy
+ from pyscf import lib, gto, scf
+ from pyscf.dft import radi
+@@ -40,8 +39,7 @@ def setUpModule():
+     mol.spin = 1
+     mol.build()
+ 
+-    mf_lda = dft.UKS(mol).set(xc='lda,', conv_tol=1e-12,
+-                              chkfile=tempfile.NamedTemporaryFile().name).newton().run()
++    mf_lda = dft.UKS(mol).set(xc='lda,', conv_tol=1e-12, chkfile=lib.NamedTemporaryFile().name).newton().run()
+ 
+ def tearDownModule():
+     global mol, mf_lda
