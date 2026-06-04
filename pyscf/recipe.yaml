@@ -1,8 +1,8 @@
 
 context:
   name: pyscf
-  version: 2.13.0
-  build_num: 9
+  version: 2.13.1
+  build_num: 0
 
 package:
   name: ${{ name }}
@@ -10,14 +10,10 @@ package:
 
 source:
   url: https://github.com/pyscf/pyscf/archive/refs/tags/v${{ version }}.tar.gz
-  sha256: b0f22880d918d3ae7cf6abb5629c457d2e58a572e22695ee849b17efa05c57d2
+  sha256: f55fe07c058f98b1ab7b1cbbf630b0a85ce7da6c5015a07f0a15ede3d14289fa
   patches:
-    - 0001-remove-stderr-from-openmp-shared.patch
-    - 0002-win-compat.patch
-    - 0003-win-export-symbols.patch
-    - 0005-win-pbc-cint.patch
-    - 0006-win-xc-wrappers.patch
-    - 0007-win-more-wrappers.patch
+    - 0001-win-dll-wrappers.patch
+    - 0002-win-build.patch
 
 build:
   python:

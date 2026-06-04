@@ -1,0 +1,79 @@
+diff --git a/MANIFEST.in b/MANIFEST.in
+index 5597f6e05..e62e98ac3 100644
+--- a/MANIFEST.in
++++ b/MANIFEST.in
+@@ -11,6 +11,10 @@ include pyscf/lib/deps/lib*/libcint.[4-9].dylib
+ include pyscf/lib/deps/lib*/libxc.*.dylib
+ include pyscf/lib/deps/lib*/libxcfun.[2-9].dylib
+ 
++# windows dynamic libraries
++include pyscf/lib/*.dll
++include pyscf/lib/deps/bin/*.dll
++
+ include pyscf/geomopt/log.ini
+ include pyscf/gto/basis/bse_meta.json
+ 
+diff --git a/examples/2-benchmark/benchmarking_utils.py b/examples/2-benchmark/benchmarking_utils.py
+index 78e3c37ea..ddefe615a 100644
+--- a/examples/2-benchmark/benchmarking_utils.py
++++ b/examples/2-benchmark/benchmarking_utils.py
+@@ -4,13 +4,24 @@ from pyscf.lib.logger import perf_counter, process_clock
+ 
+ def setup_logger():
+     log = pyscf.lib.logger.Logger(verbose=5)
+-    with open('/proc/cpuinfo') as f:
+-        for line in f:
+-            if 'model name' in line:
+-                log.note(line[:-1])
+-                break
+-    with open('/proc/meminfo') as f:
+-        log.note(f.readline()[:-1])
++    try:
++        with open('/proc/cpuinfo') as f:
++            for line in f:
++                if 'model name' in line:
++                    log.note(line[:-1])
++                    break
++    except FileNotFoundError:
++        pass
++    try:
++        with open('/proc/meminfo') as f:
++            log.note(f.readline()[:-1])
++    except FileNotFoundError:
++        try:
++            import psutil
++            mem = psutil.virtual_memory()
++            log.note(f'MemTotal: {mem.total // 1024} kB')
++        except ImportError:
++            pass
+     log.note('OMP_NUM_THREADS=%s\n', os.environ.get('OMP_NUM_THREADS', None))
+     return log
+ 
+diff --git a/pyscf/lib/CMakeLists.txt b/pyscf/lib/CMakeLists.txt
+index 60f404849..85bf0235e 100644
+--- a/pyscf/lib/CMakeLists.txt
++++ b/pyscf/lib/CMakeLists.txt
+@@ -128,7 +128,8 @@ include_directories("${PROJECT_BINARY_DIR}")
+ 
+ # See also https://gitlab.kitware.com/cmake/community/wikis/doc/cmake/RPATH-handling
+ if (WIN32)
+-  #?
++  set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
++  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--disable-runtime-pseudo-reloc")
+ elseif (APPLE)
+   set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+   set(CMAKE_INSTALL_RPATH "@loader_path;@loader_path/deps/lib;@loader_path/deps/lib64")
+diff --git a/setup.py b/setup.py
+index 67ed61cba..3cbe6a551 100755
+--- a/setup.py
++++ b/setup.py
+@@ -61,6 +61,9 @@ class CMakeBuildPy(build_py):
+         self.announce('Configuring extensions', level=3)
+         src_dir = os.path.abspath(os.path.join(__file__, '..', 'pyscf', 'lib'))
+         cmd = ['cmake', f'-S{src_dir}', f'-B{self.build_temp}']
++        # On Windows, DLLs go to CMAKE_BINARY_DIR by default. Route them to pyscf/lib
++        # alongside .so/.dylib on other platforms.
++        cmd.append(f'-DCMAKE_RUNTIME_OUTPUT_DIRECTORY={src_dir}')
+         configure_args = os.getenv('CMAKE_CONFIGURE_ARGS')
+         if configure_args:
+             cmd.extend(configure_args.split(' '))
