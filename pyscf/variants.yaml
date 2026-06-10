@@ -1,3 +1,11 @@
 microarch_level:
   - 1
   - 3
+
+c_stdlib_version:       # [linux and x86_64]
+  - 2.17                # [linux and x86_64]
+  - 2.28                # [linux and x86_64]
+m2w64_c_stdlib:         # [win]
+  - m2w64-sysroot       # [win]
+m2w64_c_stdlib_version: # [win]
+  - 12                  # [win]
