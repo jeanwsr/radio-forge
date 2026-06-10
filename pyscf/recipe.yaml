@@ -11,8 +11,8 @@ package:
   version: ${{ version }}
 
 source:
-  url: https://github.com/pyscf/pyscf/archive/4330efa7bcb607801bc9db53585b1048996bc7df.tar.gz
-  sha256: 29aa9414f86bac7891ea30c946f7ebb1d20c5bc8afa282f1944c2efe4fdc93c4
+  - git: https://github.com/pyscf/pyscf
+    rev: 4330efa7bcb607801bc9db53585b1048996bc7df
 
 build:
   number: ${{ ( (build_num | int) + 100 * (mlevel | int) + (1000 if use_fast_math else 0) ) }}
