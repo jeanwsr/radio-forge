@@ -18,8 +18,6 @@ build:
   number: ${{ ( (build_num | int) + 100 * (mlevel | int) + (1000 if use_fast_math else 0) ) }}
   python:
     version_independent: true
-  skip:
-    - not is_python_min
   script:
     - if: unix
       then:
