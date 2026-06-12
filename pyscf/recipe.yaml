@@ -11,8 +11,10 @@ package:
   version: ${{ version }}
 
 source:
-  - git: https://github.com/pyscf/pyscf
-    rev: 4330efa7bcb607801bc9db53585b1048996bc7df
+  #- git: https://github.com/pyscf/pyscf
+  #  rev: 4330efa7bcb607801bc9db53585b1048996bc7df
+  - git: https://github.com/jeanwsr/pyscf
+    rev: ba04e9f7f13d6253ac75867ceb49be658e47b4d7
 
 build:
   number: ${{ ( (build_num | int) + 100 * (mlevel | int) + (1000 if use_fast_math else 0) ) }}
