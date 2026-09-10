@@ -54,7 +54,7 @@ jobs:
           TARGET_PLATFORM: ${{ matrix.target }}
           PACKAGEDIR: ${{ matrix.packagedir }}
           PYVER: ${{ matrix.pyver }}
-          ANACONDA_API_KEY: ${{ secrets.ANACONDA_API_KEY }}
+          ANACONDA_API_KEY: ${{ secrets.ANACONDA_API_KEY_M }}
 
         run: |
           pixi run rattler-build build --recipe-dir $PACKAGEDIR \
