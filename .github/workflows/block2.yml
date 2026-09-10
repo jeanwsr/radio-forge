@@ -5,26 +5,36 @@ on:
   pull_request:
     branches:
       - main
+  push:
+    branches:
+      - main
+    paths:
+      - block2-preview/**
 
 permissions:
   contents: read
 
 jobs:
   build:
-    if: false
     strategy:
       matrix:
-        target:
-          - linux-64
-        os:
-          - ubuntu-latest
-        packagedir:
-          - block2-preview
-        pyver:
-          - "310"
-          - "311"
-          - "312"
-          - "313"
+        include:
+          - os: ubuntu-latest
+            target: linux-64
+            packagedir: block2-preview
+            pyver: "310"
+          - os: ubuntu-latest
+            target: linux-64
+            packagedir: block2-preview
+            pyver: "311"
+          - os: ubuntu-latest
+            target: linux-64
+            packagedir: block2-preview
+            pyver: "312"
+          - os: ubuntu-latest
+            target: linux-64
+            packagedir: block2-preview
+            pyver: "313"
       fail-fast: false
 
     runs-on: ${{ matrix.os }}
@@ -36,6 +46,7 @@ jobs:
         with:
           pixi-version: v0.47.0
           cache: true
+          locked: false
 
       - name: Run code in changed subdirectories
         shell: bash

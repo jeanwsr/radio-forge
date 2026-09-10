@@ -1,5 +1,5 @@
 context:
-  version: 0.5.3
+  version: 0.5.4rc16
 
 package:
   name: block2
@@ -7,52 +7,68 @@ package:
 
 source:
   git: https://github.com/block-hczhai/block2-preview.git
-  rev: "6fa8ad775fe016a91557f65e3842f50ad67687a7"
+  rev: p0.5.4rc16
   patches:
-    - 01-buildsystem.patch
+    - 02-openblas.patch
 
 build:
-  number: 1
+  number: 0
   script:
     env:
-      CMAKE_BUILD_PARALLEL_LEVEL: 4
-    content: ${{ PYTHON }} -m pip install . -vv
+      BLOCK2_USE_MKL: "OFF"
+    content: |
+      ${{ PYTHON }} -m pip install . -vv --no-deps
 
 requirements:
   build:
   - ${{ compiler('c') }}
   - ${{ compiler('cxx') }}
+  - ${{ stdlib('c') }}
   - cmake <4.0
-  - ninja
+  - python
+  - pip
+  - setuptools
   host:
   - python
   - pip
-  - ninja
-  - scikit-build-core
   - setuptools
-  - python-build
-  - mkl
-  - mkl-include
+  - cmake <4.0
   - pybind11 !=2.10.3,!=2.10.4,!=2.11.0,!=2.11.1
+  - libblas
+  - libcblas
+  - lapack
   - if: linux
     then:
       - libgomp
   run:
-  - mkl
-  - if: linux
-    then:
-      - libgomp
+  - python
   - numpy
   - scipy
   - psutil
+  - libblas
+  - libcblas
+  - lapack
+  - if: linux
+    then:
+      - libgomp
 
 tests:
 - python:
     imports:
     - block2
     pip_check: true
+- script:
+    # integrated DMRG driver smoke test from the upstream test suite
+    - block2main -v
+    - cp tests/driver/dmrg.conf dmrg.conf
+    - cp tests/driver/FCIDUMP FCIDUMP
+    - block2main dmrg.conf
+  files:
+    source:
+    - tests/driver/dmrg.conf
+    - tests/driver/FCIDUMP
 
 about:
   homepage: https://github.com/block-hczhai/block2-preview
   summary: An efficient MPO implementation of DMRG for quantum chemistry.
-  license: GPL-3.0-only	
+  license: GPL-3.0-only
