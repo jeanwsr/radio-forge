@@ -31,10 +31,10 @@ jobs:
             target: linux-64
             packagedir: block2-preview
             pyver: "312"
-          - os: ubuntu-latest
-            target: linux-64
-            packagedir: block2-preview
-            pyver: "313"
+          #- os: ubuntu-latest
+          #  target: linux-64
+          #  packagedir: block2-preview
+          #  pyver: "313"
       fail-fast: false
 
     runs-on: ${{ matrix.os }}
@@ -64,5 +64,5 @@ jobs:
 
           # ignore errors because we want to ignore duplicate packages
           for file in output/**/*.conda; do
-            pixi run rattler-build upload anaconda -o chillenb "$file" || true
+            pixi run rattler-build upload anaconda -o mokit "$file" || true
           done
