@@ -7,7 +7,7 @@ package:
 
 source:
   git: https://github.com/block-hczhai/block2-preview.git
-  rev: p0.5.4rc16
+  rev: d0549a22839377b1658e581be3ac4dde8d951c10
   patches:
     - 02-openblas.patch
 
