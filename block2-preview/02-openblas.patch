@@ -12,7 +12,8 @@
 @@ -121,6 +121,18 @@
                  build_args = ["/m:2", "/v:d"]
              else:
-                 build_args = ["--jobs=2"]
+-                build_args = ["--jobs=2"]
++                build_args = ["--jobs=3"]
 +
 +            # Append env-provided cmake arguments (e.g. conda/rattler-build
 +            # CMAKE_ARGS) so the conda build can control BLAS/LAPACK and the
