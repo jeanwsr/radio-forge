@@ -1,5 +1,5 @@
 context:
-  version: 0.5.4rc16
+  version: 0.5.4rc17
 
 package:
   name: block2
@@ -7,7 +7,7 @@ package:
 
 source:
   git: https://github.com/block-hczhai/block2-preview.git
-  rev: d0549a22839377b1658e581be3ac4dde8d951c10
+  rev: 2bc9a690b462388d06a9cf997019f3fdb41be219
   patches:
     - 02-openblas.patch
 
@@ -23,7 +23,6 @@ requirements:
   build:
   - ${{ compiler('c') }}
   - ${{ compiler('cxx') }}
-  - ${{ stdlib('c') }}
   - cmake <4.0
   - python
   - pip
