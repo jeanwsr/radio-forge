@@ -9,7 +9,7 @@
                  "-DBUILD_LIB=ON",
                  "-DBUILD_EXE=ON",
                  "-DLARGE_BOND=ON",
-@@ -121,6 +121,12 @@
+@@ -121,6 +121,18 @@
                  build_args = ["/m:2", "/v:d"]
              else:
                  build_args = ["--jobs=2"]
@@ -19,6 +19,12 @@
 +            # install prefix.
 +            if os.environ.get("CMAKE_ARGS"):
 +                cmake_args += os.environ["CMAKE_ARGS"].split()
- 
++
++            # conda-forge OpenBLAS mangles Fortran BLAS/LAPACK symbols with a
++            # trailing underscore (daxpy_), so block2 needs _F77UNDERSCORE
++            # when not linking against MKL.
++            if os.environ.get("BLOCK2_USE_MKL", "ON") != "ON":
++                cmake_args += ["-DF77UNDERSCORE=ON"]
+
              if not os.path.exists(self.build_temp):
                  os.makedirs(self.build_temp)
