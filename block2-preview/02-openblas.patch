@@ -26,6 +26,18 @@
 +            # when not linking against MKL.
 +            if os.environ.get("BLOCK2_USE_MKL", "ON") != "ON":
 +                cmake_args += ["-DF77UNDERSCORE=ON"]
-
+ 
              if not os.path.exists(self.build_temp):
-                 os.makedirs(self.build_temp)
+                os.makedirs(self.build_temp)
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -25,8 +25,5 @@
+ requires-python = ">= 3.6"
+ dependencies = [
+-    "mkl<=2024.2.2",
+-    "mkl-include",
+-    "intel-openmp",
+     "numpy",
+     "scipy",
+     "psutil",
+ ]
