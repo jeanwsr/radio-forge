@@ -8,16 +8,28 @@ package:
 source:
   git: https://github.com/block-hczhai/block2-preview.git
   rev: 2bc9a690b462388d06a9cf997019f3fdb41be219
-  patches:
-    - 02-openblas.patch
 
 build:
-  number: 0
+  number: 1
   script:
-    env:
-      BLOCK2_USE_MKL: "OFF"
     content: |
-      ${{ PYTHON }} -m pip install . -vv --no-deps
+      cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+        -DUSE_MKL=OFF -DF77UNDERSCORE=ON \
+        -DBUILD_LIB=ON -DBUILD_EXE=ON -DLARGE_BOND=ON \
+        -DUSE_KSYMM=OFF -DUSE_COMPLEX=ON -DUSE_SINGLE_PREC=ON \
+        -DUSE_SG=ON -DUSE_SANY=ON \
+        -DPython3_EXECUTABLE_HINT=$PYTHON $CMAKE_ARGS
+      cmake --build build --config Release -j3
+
+      SITE_PKGS=$($PYTHON -c 'import site; print(site.getsitepackages()[0])')
+      mkdir -p "$SITE_PKGS" "$PREFIX/bin"
+      cp build/block2.so "$SITE_PKGS/block2.so"
+      cp -r pyblock2 "$SITE_PKGS/pyblock2"
+      cp build/block2 "$PREFIX/bin/block2"
+      for s in pyblock2/driver/block2main pyblock2/driver/gaopt \
+               pyblock2/driver/readwfn.py pyblock2/driver/writewfn.py; do
+        cp "$s" "$PREFIX/bin/" && chmod +x "$PREFIX/bin/$(basename "$s")"
+      done
 
 requirements:
   build:
