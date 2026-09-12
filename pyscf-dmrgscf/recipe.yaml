@@ -1,0 +1,61 @@
+context:
+  version: "0.1.0"
+
+package:
+  name: pyscf-dmrgscf
+  version: ${{ version }}
+
+source:
+  git: https://github.com/pyscf/dmrgscf
+  rev: a03f7b6c67c61626f129e9c0c771016c14912400
+
+build:
+  number: 0
+  script:
+    content: |
+      ${{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
+      SITE=$(${{ PYTHON }} -c 'import site; print(site.getsitepackages()[0])')
+      cat > "$SITE/pyscf/dmrgscf/settings.py" <<'PYEOF'
+      import os
+      import shutil
+      from pyscf import lib
+
+      BLOCKEXE = shutil.which('block2main')
+      BLOCKEXE_COMPRESS_NEVPT = BLOCKEXE
+      BLOCKSCRATCHDIR = os.path.join(lib.param.TMPDIR, 'scratch', str(os.getpid()))
+      BLOCKRUNTIMEDIR = os.path.join(lib.param.TMPDIR, 'runtime', str(os.getpid()))
+      MPIPREFIX = ''
+      BLOCKVERSION = None
+      PYEOF
+      chmod +x "$SITE/pyscf/dmrgscf/nevpt_mpi.py"
+
+requirements:
+  build:
+  - ${{ compiler('c') }}
+  - python
+  - pip
+  - setuptools
+  host:
+  - python
+  - pip
+  - setuptools
+  run:
+  - python
+  - pyscf
+  - numpy
+  - block2
+  - if: linux
+    then:
+      - libgomp
+
+tests:
+- python:
+    imports:
+    - block2
+    - pyscf.dmrgscf
+    pip_check: true
+
+about:
+  homepage: https://github.com/pyscf/dmrgscf
+  summary: DMRG interface to call the block2 code in PySCF.
+  license: Apache-2.0
