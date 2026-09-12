@@ -23,7 +23,7 @@ build:
 
       SITE_PKGS=$($PYTHON -c 'import site; print(site.getsitepackages()[0])')
       mkdir -p "$SITE_PKGS" "$PREFIX/bin"
-      cp build/block2.so "$SITE_PKGS/block2.so"
+      cp build/block2.cpython*.so "$SITE_PKGS/block2.so"
       cp -r pyblock2 "$SITE_PKGS/pyblock2"
       cp build/block2 "$PREFIX/bin/block2"
       for s in pyblock2/driver/block2main pyblock2/driver/gaopt \
