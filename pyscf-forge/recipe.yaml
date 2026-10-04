@@ -64,7 +64,7 @@ tests:
     - pyscf.mcpdft
     pip_check: true
 - script:
-    - python -c "from pyscf.lib import load_library as L; L('lno'); L('pwscf'); L('fci_gas'); print('forge C libs load OK')"
+    - python -c "from pyscf.lib import load_library as L; L('liblno'); L('libpwscf'); L('libfci_gas'); print('forge C libs load OK')"
 
 about:
   homepage: https://github.com/pyscf/pyscf-forge
