@@ -1,0 +1,73 @@
+context:
+  version: "1.1.1"
+
+package:
+  name: pyscf-forge
+  version: ${{ version }}
+
+source:
+  git: https://github.com/pyscf/pyscf-forge
+  rev: 1f1b65f5dce6fe228a241a920e35f8b35113f1a7
+
+build:
+  number: 0
+  python:
+    version_independent: true
+  script:
+    content: |
+      SITE=$($PYTHON -c 'import site; print(site.getsitepackages()[0])')
+      export CMAKE_CONFIGURE_ARGS="${CMAKE_ARGS} -DPYSCF_SOURCE_DIR=$SITE/pyscf"
+      ${{ PYTHON }} -m pip install . -vv --no-build-isolation
+
+requirements:
+  build:
+  - ${{ compiler('c') }}
+  - cmake
+  - make
+  - python
+  - pip
+  host:
+  - python
+  - pip
+  - setuptools
+  - wheel
+  - cmake
+  - make
+  - pyscf >=2.14
+  - numpy
+  - libblas
+  - fftw
+  - if: linux
+    then:
+      - libgomp
+  - if: osx
+    then:
+      - llvm-openmp
+  run:
+  - python
+  - pyscf >=2.14
+  - numpy !=2.4.*
+  - sympy
+  - fftw
+  - if: linux
+    then:
+      - libgomp
+  - if: osx
+    then:
+      - llvm-openmp
+
+tests:
+- python:
+    imports:
+    - pyscf.dh
+    - pyscf.mcpdft
+    pip_check: true
+- script:
+    - python -c "from pyscf.lib import load_library as L; L('lno'); L('pwscf'); L('fci_gas'); print('forge C libs load OK')"
+
+about:
+  homepage: https://github.com/pyscf/pyscf-forge
+  summary: Staging ground for PySCF core features
+  license: Apache-2.0
+  license_file: LICENSE
+  repository: https://github.com/pyscf/pyscf-forge
