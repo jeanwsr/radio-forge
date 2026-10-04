@@ -2,3 +2,12 @@
 # pixi environments
 .pixi
 *.egg-info
+
+# build outputs
+output/
+
+# local notes and tools
+DEVELOPMENT.md
+.opencode/
+graphify-out/
+raw/
