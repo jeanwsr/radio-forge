@@ -46,6 +46,7 @@ requirements:
   run:
   - python
   - pyscf >=2.14
+  - pyscf-dispersion
   - numpy !=2.4.*
   - sympy
   - fftw
